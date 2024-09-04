@@ -88,7 +88,7 @@ const getImage = async (req: Request, res: Response): Promise<void> => {
 const storageVideo = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "ecomerce-bt",
+    folder: "h-tube",
     format: async (req, file): Promise<string> => {
       const ext = file.originalname.split(".").pop();
       switch (ext) {
@@ -155,7 +155,7 @@ const getVideo = async (req: Request, res: Response): Promise<void> => {
 const storageAudio = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "ecomerce-bt",
+    folder: "h-tube",
     format: async (
       req: Request,
       file: Express.Multer.File
