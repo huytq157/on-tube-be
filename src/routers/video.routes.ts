@@ -7,7 +7,6 @@ import {
   getTrendingVideos,
   deleteVideo,
   addVideo,
-  LikeVideo,
 } from "../controllers/video.controller";
 import { verifyToken } from "../middleware/verifyToken";
 import {
@@ -24,7 +23,6 @@ router.get("/favourite", verifyToken, getVideoFavourite);
 router.post("/favourite", verifyToken, addVideoFavourite);
 router.delete("/:videoId", verifyToken, deleteVideoFavourite);
 router.post("/add", verifyToken, addVideo);
-router.post("/like", verifyToken, LikeVideo);
 
 export default router;
 

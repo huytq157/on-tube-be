@@ -1,9 +1,5 @@
-import multer, { Multer } from "multer";
-import {
-  v2 as cloudinary,
-  UploadApiErrorResponse,
-  UploadApiResponse,
-} from "cloudinary";
+import multer from "multer";
+import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import { Request, Response } from "express";
 
