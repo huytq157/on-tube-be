@@ -14,11 +14,26 @@ import playlistRoute from "./routers/playlist.routes";
 dotenv.config();
 const app = express();
 
+// app.use(
+//   cors({
+//     origin: "*",
+//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+//     allowedHeaders: ["Content-Type", "Authorization"],
+//   })
+// );
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || "*";
 app.use(
   cors({
-    origin: "*",
+    origin: (origin, callback) => {
+      if (allowedOrigins === "*" || allowedOrigins.includes(origin!)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    // allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   })
 );
 
