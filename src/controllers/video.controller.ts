@@ -3,7 +3,6 @@ import { VideoModel } from "../models/video.models";
 import { CategoryModel } from "../models/category.models";
 import { PlaylistModel } from "../models/playlist.models";
 import { TagModel } from "../models/tag.models";
-import { LikeModel } from "../models/like.models";
 import mongoose from "mongoose";
 
 interface CustomRequest extends Request {
@@ -263,50 +262,5 @@ export const addVideo = async (req: CustomRequest, res: Response) => {
       success: false,
       message: "Server error, please try again later.",
     });
-  }
-};
-
-export const LikeVideo = async (req: CustomRequest, res: Response) => {
-  const { videoId, type } = req.body;
-  const userId = req.userId as string;
-
-  if (!videoId || !type || !["LIKE", "DISLIKE"].includes(type)) {
-    return res.status(400).json({ message: "Invalid request data" });
-  }
-
-  try {
-    const existingLike = await LikeModel.findOne({
-      user: userId,
-      video: videoId,
-    });
-
-    if (existingLike) {
-      if (existingLike.type === type) {
-        await LikeModel.deleteOne({ _id: existingLike._id });
-      } else {
-        await LikeModel.updateOne({ _id: existingLike._id }, { type });
-      }
-    } else {
-      await LikeModel.create({ user: userId, video: videoId, type });
-    }
-
-    const likesCount = await LikeModel.countDocuments({
-      video: videoId,
-      type: "LIKE",
-    });
-    const dislikesCount = await LikeModel.countDocuments({
-      video: videoId,
-      type: "DISLIKE",
-    });
-
-    await VideoModel.findByIdAndUpdate(videoId, {
-      likesCount,
-      dislikesCount,
-    });
-
-    res.status(200).json({ message: "Success" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
   }
 };
