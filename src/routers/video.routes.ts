@@ -7,6 +7,7 @@ import {
   getTrendingVideos,
   deleteVideo,
   addVideo,
+  getVideobyId,
 } from "../controllers/video.controller";
 import { verifyToken } from "../middleware/verifyToken";
 import {
@@ -23,6 +24,7 @@ router.get("/favourite", verifyToken, getVideoFavourite);
 router.post("/favourite", verifyToken, addVideoFavourite);
 router.delete("/:videoId", verifyToken, deleteVideoFavourite);
 router.post("/add", verifyToken, addVideo);
+router.get("/:id", getVideobyId);
 
 export default router;
 
@@ -193,6 +195,53 @@ export default router;
  * @swagger
  * tags:
  *   name: Videos
+ */
+
+/**
+ * @swagger
+ * /api/video/{id}:
+ *   get:
+ *     tags: [Videos]
+ *     summary: Lấy chi tiết video
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: 64f3a2b9b0f3b3f97f0a1234
+ *         description: ID của video cần lấy
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the video details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 video:
+ *                   $ref: '#/components/schemas/Video'
+ *       400:
+ *         description: Invalid video ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Video không tìm thấy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 
 /**

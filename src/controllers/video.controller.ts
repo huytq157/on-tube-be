@@ -264,3 +264,43 @@ export const deleteVideo = async (
     });
   }
 };
+
+export const getVideobyId = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid video ID",
+    });
+  }
+
+  try {
+    const video = await VideoModel.findById(id)
+      .populate("writer")
+      .populate("category")
+      .populate("playlist")
+      .populate("tags");
+
+    if (!video) {
+      return res.status(404).json({
+        success: false,
+        message: "Video not found!",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      video,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
