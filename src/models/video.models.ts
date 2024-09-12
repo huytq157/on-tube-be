@@ -41,7 +41,7 @@ const VideoSchema = new mongoose.Schema(
         ref: "Tag",
       },
     ],
-    videoThumnail: {
+    videoThumbnail: {
       type: String,
     },
     totalView: {

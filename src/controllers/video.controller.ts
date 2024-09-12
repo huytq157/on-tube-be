@@ -42,108 +42,6 @@ export const getAllVideos = async (
   }
 };
 
-export const searchVideo = async (req: Request, res: Response) => {
-  const searchTerm = req.query.q as string;
-
-  if (!searchTerm || !searchTerm.trim()) {
-    return res.status(400).json({
-      success: false,
-      message: "Missing parameters!",
-    });
-  }
-
-  try {
-    const textReg = new RegExp(searchTerm.trim(), "i");
-    const results = await VideoModel.find({
-      title: textReg,
-    })
-      .populate("writer")
-      .sort("-totalView");
-
-    return res.json({
-      success: true,
-      results,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      success: false,
-      message: "An error occurred while searching for videos.",
-    });
-  }
-};
-
-export const getTrendingVideos = async (req: Request, res: Response) => {
-  try {
-    const trendingVideos = await VideoModel.find({ isPublic: true })
-      .sort({ totalView: -1, createdAt: -1 })
-      .limit(10);
-
-    if (!trendingVideos || trendingVideos.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No trending videos found!",
-      });
-    }
-
-    return res.json({
-      success: true,
-      data: trendingVideos,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error!",
-    });
-  }
-};
-
-export const deleteVideo = async (
-  req: CustomRequest,
-  res: Response
-): Promise<Response> => {
-  const _id = req.params.id;
-  const userId = req.userId as string;
-
-  try {
-    const videoToDelete = await VideoModel.findOne({ _id });
-
-    if (!videoToDelete) {
-      return res.status(404).json({
-        success: false,
-        message: "Video not found!",
-      });
-    }
-
-    if (videoToDelete.writer.toString() === userId) {
-      const deletedVideo = await VideoModel.findOneAndDelete({ _id });
-      if (deletedVideo) {
-        return res.json({
-          success: true,
-          message: "Delete success!",
-        });
-      } else {
-        return res.status(500).json({
-          success: false,
-          message: "Failed to delete the video!",
-        });
-      }
-    } else {
-      return res.status(403).json({
-        success: false,
-        message: "Bạn không có quyền xóa video này!",
-      });
-    }
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error!",
-    });
-  }
-};
-
 export const addVideo = async (req: CustomRequest, res: Response) => {
   if (!req.body.videoUrl.includes("")) {
     return res.status(400).json({
@@ -261,6 +159,108 @@ export const addVideo = async (req: CustomRequest, res: Response) => {
     return res.status(500).json({
       success: false,
       message: "Server error, please try again later.",
+    });
+  }
+};
+
+export const searchVideo = async (req: Request, res: Response) => {
+  const searchTerm = req.query.q as string;
+
+  if (!searchTerm || !searchTerm.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: "Missing parameters!",
+    });
+  }
+
+  try {
+    const textReg = new RegExp(searchTerm.trim(), "i");
+    const results = await VideoModel.find({
+      title: textReg,
+    })
+      .populate("writer")
+      .sort("-totalView");
+
+    return res.json({
+      success: true,
+      results,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while searching for videos.",
+    });
+  }
+};
+
+export const getTrendingVideos = async (req: Request, res: Response) => {
+  try {
+    const trendingVideos = await VideoModel.find({ isPublic: true })
+      .sort({ totalView: -1, createdAt: -1 })
+      .limit(10);
+
+    if (!trendingVideos || trendingVideos.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No trending videos found!",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: trendingVideos,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error!",
+    });
+  }
+};
+
+export const deleteVideo = async (
+  req: CustomRequest,
+  res: Response
+): Promise<Response> => {
+  const _id = req.params.id;
+  const userId = req.userId as string;
+
+  try {
+    const videoToDelete = await VideoModel.findOne({ _id });
+
+    if (!videoToDelete) {
+      return res.status(404).json({
+        success: false,
+        message: "Video not found!",
+      });
+    }
+
+    if (videoToDelete.writer.toString() === userId) {
+      const deletedVideo = await VideoModel.findOneAndDelete({ _id });
+      if (deletedVideo) {
+        return res.json({
+          success: true,
+          message: "Delete success!",
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to delete the video!",
+        });
+      }
+    } else {
+      return res.status(403).json({
+        success: false,
+        message: "Bạn không có quyền xóa video này!",
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error!",
     });
   }
 };
