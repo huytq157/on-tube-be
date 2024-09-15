@@ -13,24 +13,31 @@ export const getAllVideos = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
+  console.time("getAllVideos");
+
   try {
-    const page = parseInt(req.query.page as string, 10) || 1;
     const limit = parseInt(req.query.limit as string, 10) || 12;
-    const skip = (page - 1) * limit;
+    const cursor = req.query.cursor as string;
 
-    const total = await VideoModel.countDocuments();
+    const query: any = {};
+    if (cursor) {
+      query._id = { $gt: new mongoose.Types.ObjectId(cursor) };
+    }
 
-    const videos = await VideoModel.find()
+    const videos = await VideoModel.find(query)
       .limit(limit)
-      .skip(skip)
-      .populate("writer")
+      .populate("writer", "name avatar")
       .sort("-createdAt");
+
+    console.timeEnd("getAllVideos");
+
+    const nextCursor =
+      videos.length > 0 ? videos[videos.length - 1]._id.toString() : null;
 
     return res.status(200).json({
       success: true,
       videos,
-      totalPage: Math.ceil(total / limit),
-      currentPage: page,
+      nextCursor, // Trả về con trỏ cho phân trang tiếp theo
     });
   } catch (error) {
     console.error(error);
@@ -41,6 +48,45 @@ export const getAllVideos = async (
     });
   }
 };
+
+// export const getAllVideos = async (
+//   req: Request,
+//   res: Response
+// ): Promise<Response> => {
+//   console.time("getAllVideos");
+//   try {
+//     const page = parseInt(req.query.page as string, 10) || 1;
+//     const limit = parseInt(req.query.limit as string, 10) || 12;
+//     const skip = (page - 1) * limit;
+
+//     const total = await VideoModel.countDocuments();
+
+//     const videos = await VideoModel.find()
+//       .select(
+//         "title description videoUrl isPublic category totalView videoThumbnail createdAt updatedAt writer"
+//       )
+//       .limit(limit)
+//       .skip(skip)
+//       .populate("writer", "name avatar email")
+//       .sort("-createdAt");
+
+//     console.timeEnd("getAllVideos");
+
+//     return res.status(200).json({
+//       success: true,
+//       videos,
+//       totalPage: Math.ceil(total / limit),
+//       currentPage: page,
+//     });
+//   } catch (error) {
+//     console.error(error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Internal Server Error",
+//     });
+//   }
+// };
 
 export const addVideo = async (req: CustomRequest, res: Response) => {
   if (!req.body.videoUrl.includes("")) {
@@ -163,6 +209,128 @@ export const addVideo = async (req: CustomRequest, res: Response) => {
   }
 };
 
+export const updateVideo = async (req: CustomRequest, res: Response) => {
+  const videoId = req.params.id;
+  const userId = req.userId;
+
+  try {
+    const {
+      title,
+      description,
+      videoUrl,
+      isPublic,
+      category,
+      playlist,
+      tags,
+      videoThumbnail,
+      publishedDate,
+    } = req.body;
+
+    // Kiểm tra video có tồn tại và thuộc về người dùng hiện tại hay không
+    const video = await VideoModel.findById(videoId);
+    if (!video) {
+      return res.status(404).json({
+        success: false,
+        message: "Video not found!",
+      });
+    }
+    if (video.writer.toString() !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to update this video!",
+      });
+    }
+
+    // Kiểm tra URL video có hợp lệ không
+    if (videoUrl && !videoUrl.includes("http")) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid video URL!",
+      });
+    }
+
+    // Kiểm tra category có tồn tại không
+    let validCategory = video.category;
+    if (category && mongoose.Types.ObjectId.isValid(category)) {
+      const categoryExists = await CategoryModel.findById(category);
+      if (categoryExists) {
+        validCategory = category;
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "Category does not exist!",
+        });
+      }
+    }
+
+    // Kiểm tra playlist có tồn tại không
+    let validPlaylist = video.playlist;
+    if (playlist && mongoose.Types.ObjectId.isValid(playlist)) {
+      const playlistExists = await PlaylistModel.findById(playlist);
+      if (playlistExists) {
+        validPlaylist = playlist;
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "Playlist does not exist!",
+        });
+      }
+    }
+
+    // Kiểm tra tag có tồn tại không
+    const validTags = [];
+    if (tags && Array.isArray(tags)) {
+      for (const tag of tags) {
+        if (mongoose.Types.ObjectId.isValid(tag)) {
+          const tagExists = await TagModel.findById(tag);
+          if (tagExists) {
+            validTags.push(tag);
+          } else {
+            return res.status(400).json({
+              success: false,
+              message: `Tag with ID ${tag} does not exist!`,
+            });
+          }
+        } else {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid tag ID ${tag}!`,
+          });
+        }
+      }
+    }
+
+    // Cập nhật video
+    const updatedVideo = await VideoModel.findByIdAndUpdate(
+      videoId,
+      {
+        title: title || video.title,
+        description: description || video.description,
+        videoUrl: videoUrl || video.videoUrl,
+        isPublic: typeof isPublic === "boolean" ? isPublic : video.isPublic,
+        category: validCategory,
+        playlist: validPlaylist,
+        tags: validTags.length > 0 ? validTags : video.tags,
+        videoThumbnail: videoThumbnail || video.videoThumbnail,
+        publishedDate: publishedDate || video.publishedDate,
+      },
+      { new: true } // Trả về tài liệu đã được cập nhật
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Video updated successfully!",
+      data: updatedVideo,
+    });
+  } catch (error) {
+    console.error("Error updating video:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error, please try again later.",
+    });
+  }
+};
+
 export const searchVideo = async (req: Request, res: Response) => {
   const searchTerm = req.query.q as string;
 
@@ -178,8 +346,10 @@ export const searchVideo = async (req: Request, res: Response) => {
     const results = await VideoModel.find({
       title: textReg,
     })
-      .populate("writer")
+      .populate("writer", "name email avatar")
       .sort("-totalView");
+    // .limit(12)
+    // .lean();
 
     return res.json({
       success: true,
@@ -226,7 +396,7 @@ export const deleteVideo = async (
 ): Promise<Response> => {
   const _id = req.params.id;
   const userId = req.userId as string;
-
+  // console.time("getVideobyId");
   try {
     const videoToDelete = await VideoModel.findOne({ _id });
 
@@ -265,13 +435,56 @@ export const deleteVideo = async (
   }
 };
 
+// export const getVideobyId = async (
+//   req: Request,
+//   res: Response
+// ): Promise<Response> => {
+//   const { id } = req.params;
+//   console.time("getVideobyId");
+//   if (!mongoose.Types.ObjectId.isValid(id)) {
+//     return res.status(400).json({
+//       success: false,
+//       message: "Invalid video ID",
+//     });
+//   }
+
+//   try {
+//     const video = await VideoModel.findById(id)
+//       .populate("writer")
+//       .populate("category")
+//       .populate("playlist")
+//       .populate("tags");
+
+//     if (!video) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Video not found!",
+//       });
+//     }
+//     console.timeEnd("getVideobyId");
+//     return res.status(200).json({
+//       success: true,
+//       video,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Internal Server Error",
+//     });
+//   }
+// };
+
 export const getVideobyId = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
   const { id } = req.params;
 
+  console.time("getVideobyId");
+
   if (!mongoose.Types.ObjectId.isValid(id)) {
+    console.timeEnd("getVideobyId");
     return res.status(400).json({
       success: false,
       message: "Invalid video ID",
@@ -280,17 +493,19 @@ export const getVideobyId = async (
 
   try {
     const video = await VideoModel.findById(id)
-      .populate("writer")
-      .populate("category")
-      .populate("playlist")
-      .populate("tags");
+      .populate("writer", "name avatar")
+      .populate("tags", "name")
+      .lean();
 
     if (!video) {
+      console.timeEnd("getVideobyId");
       return res.status(404).json({
         success: false,
         message: "Video not found!",
       });
     }
+
+    console.timeEnd("getVideobyId");
 
     return res.status(200).json({
       success: true,
@@ -298,6 +513,7 @@ export const getVideobyId = async (
     });
   } catch (error) {
     console.error(error);
+    console.timeEnd("getVideobyId");
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",

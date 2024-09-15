@@ -16,6 +16,13 @@ interface CloudinaryParams {
     file: Express.Multer.File
   ) => Promise<string> | string;
   public_id?: (req: Request, file: Express.Multer.File) => string;
+  resource_type?: string;
+  eager_async?: boolean;
+  eager?: (
+    | { transformation: string }
+    | { width: number; crop: string }
+    | { width: number; height: number; crop: string; gravity: string }
+  )[];
 }
 
 const storageImage = new CloudinaryStorage({
@@ -101,6 +108,11 @@ const storageVideo = new CloudinaryStorage({
     public_id: (req, file): string =>
       `videos/${Date.now()}-${file.originalname.split(".")[0]}`,
     resource_type: "video",
+    eager_async: true,
+    eager: [
+      { width: 800, crop: "scale" },
+      { width: 500, height: 500, crop: "crop", gravity: "center" },
+    ],
   } as CloudinaryParams,
 });
 

@@ -8,6 +8,7 @@ import {
   deleteVideo,
   addVideo,
   getVideobyId,
+  updateVideo,
 } from "../controllers/video.controller";
 import { verifyToken } from "../middleware/verifyToken";
 import {
@@ -25,6 +26,7 @@ router.post("/favourite", verifyToken, addVideoFavourite);
 router.delete("/:videoId", verifyToken, deleteVideoFavourite);
 router.post("/add", verifyToken, addVideo);
 router.get("/:id", getVideobyId);
+router.patch("/:id", verifyToken, updateVideo);
 
 export default router;
 
@@ -842,6 +844,153 @@ export default router;
  *           type: http
  *           scheme: bearer
  *           bearerFormat: JWT
+ */
+
+/**
+ * @swagger
+ * /api/video/{id}:
+ *   patch:
+ *     summary: Cập nhật thông tin video
+ *     tags: [Videos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: "Updated Video Title"
+ *               description:
+ *                 type: string
+ *                 example: "Updated description of the video."
+ *               videoUrl:
+ *                 type: string
+ *                 example: "https://example.com/updated-video.mp4"
+ *               isPublic:
+ *                 type: boolean
+ *                 example: true
+ *               category:
+ *                 type: string
+ *                 example: "64f7c3a2d0a4b9c1a1fba92f"
+ *               playlist:
+ *                 type: string
+ *                 example: "64f7c3a2d0a4b9c1a1fba930"
+ *               tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   example: "64f7c3a2d0a4b9c1a1fba931"
+ *               videoThumbnail:
+ *                 type: string
+ *                 example: "https://example.com/thumbnails/updated-thumbnail.jpg"
+ *               publishedDate:
+ *                 type: string
+ *                 format: date
+ *                 example: "2023-08-29"
+ *     responses:
+ *       200:
+ *         description: Successfully updated the video.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Video updated successfully!"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       example: "64f7c3a2d0a4b9c1a1fba92e"
+ *                     title:
+ *                       type: string
+ *                       example: "Updated Video Title"
+ *                     description:
+ *                       type: string
+ *                       example: "Updated description of the video."
+ *                     videoUrl:
+ *                       type: string
+ *                       example: "https://example.com/updated-video.mp4"
+ *                     writer:
+ *                       type: string
+ *                       example: "64f7c3a2d0a4b9c1a1fba92e"
+ *                     isPublic:
+ *                       type: boolean
+ *                       example: true
+ *                     totalView:
+ *                       type: number
+ *                       example: 1024
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2023-08-29T12:34:56Z"
+ *       400:
+ *         description: Bad request, validation error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid request data!"
+ *       403:
+ *         description: Unauthorized to update the video.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "You do not have permission to update this video!"
+ *       404:
+ *         description: Video not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Video not found!"
+ *       500:
+ *         description: Server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Server error, please try again later."
  */
 
 /**
