@@ -9,6 +9,7 @@ import {
   addVideo,
   getVideobyId,
   updateVideo,
+  descView,
 } from "../controllers/video.controller";
 import { verifyToken } from "../middleware/verifyToken";
 import {
@@ -27,6 +28,7 @@ router.delete("/:videoId", verifyToken, deleteVideoFavourite);
 router.post("/add", verifyToken, addVideo);
 router.get("/:id", getVideobyId);
 router.patch("/:id", verifyToken, updateVideo);
+router.post("/watch/:id", descView);
 
 export default router;
 
@@ -1046,4 +1048,75 @@ export default router;
  *         message:
  *           type: string
  *           example: Internal Server Error
+ */
+
+/**
+ * @swagger
+ * /api/video/watch/{id}:
+ *   post:
+ *     tags: [Videos]
+ *     summary: Increment view count of a video
+ *     description: Increments the view count of a video if the user has watched it for at least 60 seconds.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the video
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               watchTime:
+ *                 type: number
+ *                 description: The time (in seconds) the user watched the video
+ *                 example: 65
+ *     responses:
+ *       200:
+ *         description: Successfully incremented the view count of the video.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "View added"
+ *                 video:
+ *                   type: object
+ *                   description: Updated video object
+ *       400:
+ *         description: Bad request if the watch time is less than 60 seconds.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Watch time must be at least 60 seconds"
+ *       404:
+ *         description: Video not found if the video ID does not exist.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Video not found"
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Server error"
  */

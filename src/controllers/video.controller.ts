@@ -520,3 +520,32 @@ export const getVideobyId = async (
     });
   }
 };
+
+export const descView = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { watchTime } = req.body;
+
+    if (watchTime >= 60) {
+      const updatedVideo = await VideoModel.findByIdAndUpdate(
+        id,
+        { $inc: { totalView: 1 } },
+        { new: true }
+      );
+
+      if (!updatedVideo) {
+        return res.status(404).json({ message: "Video not found" });
+      }
+
+      return res
+        .status(200)
+        .json({ message: "View added", video: updatedVideo });
+    } else {
+      return res
+        .status(400)
+        .json({ message: "Watch time must be at least 60 seconds" });
+    }
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error });
+  }
+};
