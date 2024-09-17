@@ -28,7 +28,7 @@ interface CloudinaryParams {
 const storageImage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "h-tube",
+    folder: "h-tube-image",
     format: async (req, file): Promise<string> => {
       const ext = file.originalname.split(".").pop();
       switch (ext) {
@@ -91,7 +91,7 @@ const getImage = async (req: Request, res: Response): Promise<void> => {
 const storageVideo = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "h-tube",
+    folder: "h-tube-video",
     format: async (req, file): Promise<string> => {
       const ext = file.originalname.split(".").pop();
       switch (ext) {
