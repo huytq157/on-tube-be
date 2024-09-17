@@ -37,7 +37,7 @@ export const getAllVideos = async (
     return res.status(200).json({
       success: true,
       videos,
-      nextCursor, // Trả về con trỏ cho phân trang tiếp theo
+      nextCursor,
     });
   } catch (error) {
     console.error(error);
@@ -48,45 +48,6 @@ export const getAllVideos = async (
     });
   }
 };
-
-// export const getAllVideos = async (
-//   req: Request,
-//   res: Response
-// ): Promise<Response> => {
-//   console.time("getAllVideos");
-//   try {
-//     const page = parseInt(req.query.page as string, 10) || 1;
-//     const limit = parseInt(req.query.limit as string, 10) || 12;
-//     const skip = (page - 1) * limit;
-
-//     const total = await VideoModel.countDocuments();
-
-//     const videos = await VideoModel.find()
-//       .select(
-//         "title description videoUrl isPublic category totalView videoThumbnail createdAt updatedAt writer"
-//       )
-//       .limit(limit)
-//       .skip(skip)
-//       .populate("writer", "name avatar email")
-//       .sort("-createdAt");
-
-//     console.timeEnd("getAllVideos");
-
-//     return res.status(200).json({
-//       success: true,
-//       videos,
-//       totalPage: Math.ceil(total / limit),
-//       currentPage: page,
-//     });
-//   } catch (error) {
-//     console.error(error);
-
-//     return res.status(500).json({
-//       success: false,
-//       message: "Internal Server Error",
-//     });
-//   }
-// };
 
 export const addVideo = async (req: CustomRequest, res: Response) => {
   if (!req.body.videoUrl.includes("")) {
@@ -366,28 +327,7 @@ export const searchVideo = async (req: Request, res: Response) => {
 
 export const getTrendingVideos = async (req: Request, res: Response) => {
   try {
-    const trendingVideos = await VideoModel.find({ isPublic: true })
-      .sort({ totalView: -1, createdAt: -1 })
-      .limit(10);
-
-    if (!trendingVideos || trendingVideos.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No trending videos found!",
-      });
-    }
-
-    return res.json({
-      success: true,
-      data: trendingVideos,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error!",
-    });
-  }
+  } catch (error) {}
 };
 
 export const deleteVideo = async (
@@ -396,7 +336,7 @@ export const deleteVideo = async (
 ): Promise<Response> => {
   const _id = req.params.id;
   const userId = req.userId as string;
-  // console.time("getVideobyId");
+
   try {
     const videoToDelete = await VideoModel.findOne({ _id });
 
@@ -435,45 +375,34 @@ export const deleteVideo = async (
   }
 };
 
-// export const getVideobyId = async (
-//   req: Request,
-//   res: Response
-// ): Promise<Response> => {
-//   const { id } = req.params;
-//   console.time("getVideobyId");
-//   if (!mongoose.Types.ObjectId.isValid(id)) {
-//     return res.status(400).json({
-//       success: false,
-//       message: "Invalid video ID",
-//     });
-//   }
+export const descView = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { watchTime } = req.body;
 
-//   try {
-//     const video = await VideoModel.findById(id)
-//       .populate("writer")
-//       .populate("category")
-//       .populate("playlist")
-//       .populate("tags");
+    if (watchTime >= 60) {
+      const updatedVideo = await VideoModel.findByIdAndUpdate(
+        id,
+        { $inc: { totalView: 1 } },
+        { new: true }
+      );
 
-//     if (!video) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Video not found!",
-//       });
-//     }
-//     console.timeEnd("getVideobyId");
-//     return res.status(200).json({
-//       success: true,
-//       video,
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Internal Server Error",
-//     });
-//   }
-// };
+      if (!updatedVideo) {
+        return res.status(404).json({ message: "Video not found" });
+      }
+
+      return res
+        .status(200)
+        .json({ message: "View added", video: updatedVideo });
+    } else {
+      return res
+        .status(400)
+        .json({ message: "Watch time must be at least 60 seconds" });
+    }
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error });
+  }
+};
 
 export const getVideobyId = async (
   req: Request,
@@ -521,31 +450,63 @@ export const getVideobyId = async (
   }
 };
 
-export const descView = async (req: Request, res: Response) => {
+export const getVideoRecommend = async (req: Request, res: Response) => {
+  const { id } = req.params; // Video ID hiện tại
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid video ID",
+    });
+  }
+
   try {
-    const { id } = req.params;
-    const { watchTime } = req.body;
+    const currentVideo = await VideoModel.findById(id).lean();
 
-    if (watchTime >= 60) {
-      const updatedVideo = await VideoModel.findByIdAndUpdate(
-        id,
-        { $inc: { totalView: 1 } },
-        { new: true }
-      );
-
-      if (!updatedVideo) {
-        return res.status(404).json({ message: "Video not found" });
-      }
-
-      return res
-        .status(200)
-        .json({ message: "View added", video: updatedVideo });
-    } else {
-      return res
-        .status(400)
-        .json({ message: "Watch time must be at least 60 seconds" });
+    if (!currentVideo) {
+      return res.status(404).json({
+        success: false,
+        message: "Video not found!",
+      });
     }
+
+    // Lấy các video liên quan dựa trên cùng category hoặc tags
+    let recommendedVideos = await VideoModel.find({
+      _id: { $ne: id }, // Loại bỏ video hiện tại
+      $or: [
+        { category: currentVideo.category }, // Cùng category
+        { tags: { $in: currentVideo.tags } }, // Hoặc có chung ít nhất 1 tag
+      ],
+      isPublic: true,
+    })
+      .sort({ totalView: -1 }) // Sắp xếp theo số lượt xem giảm dần
+      .limit(10)
+      .populate("writer", "name avatar")
+      .populate("tags", "name")
+      .lean();
+
+    // Nếu không tìm được video nào trùng category hoặc tags
+    if (recommendedVideos.length === 0) {
+      recommendedVideos = await VideoModel.find({
+        _id: { $ne: id }, // Loại bỏ video hiện tại
+        isPublic: true,
+      })
+        .sort({ totalView: -1, publishedDate: -1 })
+        .limit(10)
+        .populate("writer", "name avatar")
+        .populate("tags", "name")
+        .lean();
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: recommendedVideos,
+    });
   } catch (error) {
-    return res.status(500).json({ message: "Server error", error });
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };

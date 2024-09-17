@@ -10,6 +10,7 @@ import {
   getVideobyId,
   updateVideo,
   descView,
+  getVideoRecommend,
 } from "../controllers/video.controller";
 import { verifyToken } from "../middleware/verifyToken";
 import {
@@ -29,6 +30,7 @@ router.post("/add", verifyToken, addVideo);
 router.get("/:id", getVideobyId);
 router.patch("/:id", verifyToken, updateVideo);
 router.post("/watch/:id", descView);
+router.get("/list/recommend/:id", getVideoRecommend);
 
 export default router;
 
@@ -1119,4 +1121,74 @@ export default router;
  *                 message:
  *                   type: string
  *                   example: "Server error"
+ */
+
+/**
+ * @swagger
+ * /api/video/list/recommend/{id}:
+ *   get:
+ *     tags: [Videos]
+ *     summary: Lấy danh sách video được đề xuất
+ *     description: Lấy danh sách các video được đề xuất dựa trên category hoặc tags của video hiện tại. Nếu không có video liên quan, sẽ đề xuất các video phổ biến.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID của video để tìm video đề xuất
+ *         schema:
+ *           type: string
+ *           example: 64b13c5c27f8b03a78b8920d
+ *       - name: limit
+ *         in: query
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the recommended videos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 videos:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Video'
+ *       400:
+ *         description: Invalid video ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid video ID"
+ *       404:
+ *         description: Video not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Video not found!"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
