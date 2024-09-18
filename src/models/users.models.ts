@@ -24,7 +24,8 @@ const UserSchema = new mongoose.Schema(
     },
     avatar: {
       type: String,
-      default: "https://example.com/default-avatar.png",
+      default:
+        "https://res.cloudinary.com/dkbothcn5/image/upload/v1726651538/h-tube-image/computed-filename-using-request.jpg",
     },
     roleId: {
       type: String,

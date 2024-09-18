@@ -37,8 +37,7 @@ const VideoSchema = new mongoose.Schema(
     },
     tags: [
       {
-        type: Schema.Types.ObjectId,
-        ref: "Tag",
+        type: String,
       },
     ],
     videoThumbnail: {

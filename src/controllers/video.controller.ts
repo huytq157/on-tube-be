@@ -13,8 +13,6 @@ export const getAllVideos = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  console.time("getAllVideos");
-
   try {
     const limit = parseInt(req.query.limit as string, 10) || 12;
     const cursor = req.query.cursor as string;
@@ -28,8 +26,6 @@ export const getAllVideos = async (
       .limit(limit)
       .populate("writer", "name avatar")
       .sort("-createdAt");
-
-    console.timeEnd("getAllVideos");
 
     const nextCursor =
       videos.length > 0 ? videos[videos.length - 1]._id.toString() : null;
@@ -118,28 +114,6 @@ export const addVideo = async (req: CustomRequest, res: Response) => {
       }
     }
 
-    const validTags = [];
-    if (tags && Array.isArray(tags)) {
-      for (const tag of tags) {
-        if (mongoose.Types.ObjectId.isValid(tag)) {
-          const tagExists = await TagModel.findById(tag);
-          if (tagExists) {
-            validTags.push(tag);
-          } else {
-            return res.status(400).json({
-              success: false,
-              message: `Tag with ID ${tag} does not exist!`,
-            });
-          }
-        } else {
-          return res.status(400).json({
-            success: false,
-            message: `Invalid tag ID ${tag}!`,
-          });
-        }
-      }
-    }
-
     const writer = req.userId;
     const newVideo = new VideoModel({
       title,
@@ -148,7 +122,7 @@ export const addVideo = async (req: CustomRequest, res: Response) => {
       isPublic,
       category: validCategory,
       playlist: validPlaylist,
-      tags: validTags,
+      tags,
       videoThumbnail,
       publishedDate,
       writer,
@@ -238,29 +212,6 @@ export const updateVideo = async (req: CustomRequest, res: Response) => {
       }
     }
 
-    // Kiểm tra tag có tồn tại không
-    const validTags = [];
-    if (tags && Array.isArray(tags)) {
-      for (const tag of tags) {
-        if (mongoose.Types.ObjectId.isValid(tag)) {
-          const tagExists = await TagModel.findById(tag);
-          if (tagExists) {
-            validTags.push(tag);
-          } else {
-            return res.status(400).json({
-              success: false,
-              message: `Tag with ID ${tag} does not exist!`,
-            });
-          }
-        } else {
-          return res.status(400).json({
-            success: false,
-            message: `Invalid tag ID ${tag}!`,
-          });
-        }
-      }
-    }
-
     // Cập nhật video
     const updatedVideo = await VideoModel.findByIdAndUpdate(
       videoId,
@@ -271,7 +222,7 @@ export const updateVideo = async (req: CustomRequest, res: Response) => {
         isPublic: typeof isPublic === "boolean" ? isPublic : video.isPublic,
         category: validCategory,
         playlist: validPlaylist,
-        tags: validTags.length > 0 ? validTags : video.tags,
+        tags: tags || video.tags,
         videoThumbnail: videoThumbnail || video.videoThumbnail,
         publishedDate: publishedDate || video.publishedDate,
       },
