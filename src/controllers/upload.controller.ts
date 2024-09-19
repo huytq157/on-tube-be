@@ -43,7 +43,19 @@ const storageImage = new CloudinaryStorage({
           return "png";
       }
     },
-    public_id: (req, file): string => "computed-filename-using-request",
+    public_id: (req, file): string => {
+      const timestamp = Date.now();
+      const ext = file.originalname.split(".").pop();
+      return `h-tube-image-${timestamp}-${file.originalname.replace(
+        `.${ext}`,
+        ""
+      )}`;
+    },
+    transformation: [
+      { width: 600, crop: "limit" },
+      { quality: "auto" },
+      { fetch_format: "webp" },
+    ],
   } as CloudinaryParams,
 });
 

@@ -12,17 +12,11 @@ import videoRoute from "./routers/video.routes";
 import playlistRoute from "./routers/playlist.routes";
 import categoryRoute from "./routers/category.routes";
 import tagRoute from "./routers/tag.routes";
+import { createProxyMiddleware } from "http-proxy-middleware";
 
 dotenv.config();
 const app = express();
 
-// app.use(
-//   cors({
-//     origin: "*",
-//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-//     allowedHeaders: ["Content-Type", "Authorization"],
-//   })
-// );
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || "*";
 app.use(
   cors({

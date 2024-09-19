@@ -259,9 +259,9 @@ export const searchVideo = async (req: Request, res: Response) => {
       title: textReg,
     })
       .populate("writer", "name email avatar")
-      .sort("-totalView");
-    // .limit(12)
-    // .lean();
+      .sort("-totalView")
+      .limit(12)
+      .lean();
 
     return res.json({
       success: true,
