@@ -268,7 +268,7 @@ export default router;
  *         required: false
  *         schema:
  *           type: integer
- *           example: 12
+ *           example: 6
  *     responses:
  *       200:
  *         description: Successfully retrieved the list of videos

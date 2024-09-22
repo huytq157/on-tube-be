@@ -12,6 +12,8 @@ import videoRoute from "./routers/video.routes";
 import playlistRoute from "./routers/playlist.routes";
 import categoryRoute from "./routers/category.routes";
 import tagRoute from "./routers/tag.routes";
+import channelRoute from "./routers/channel.routes";
+
 import { createProxyMiddleware } from "http-proxy-middleware";
 
 dotenv.config();
@@ -53,6 +55,7 @@ app.use("/api/video", videoRoute);
 app.use("/api/playlist", playlistRoute);
 app.use("/api/categories", categoryRoute);
 app.use("/api/tags", tagRoute);
+app.use("/api/channel", channelRoute);
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {

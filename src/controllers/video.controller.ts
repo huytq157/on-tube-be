@@ -9,35 +9,67 @@ interface CustomRequest extends Request {
   userId?: string;
 }
 
+// export const getAllVideos = async (
+//   req: Request,
+//   res: Response
+// ): Promise<Response> => {
+//   try {
+//     const limit = parseInt(req.query.limit as string, 10) || 12;
+//     const cursor = req.query.cursor as string;
+
+//     const query: any = {};
+//     if (cursor) {
+//       query._id = { $gt: new mongoose.Types.ObjectId(cursor) };
+//     }
+
+//     const videos = await VideoModel.find(query)
+//       .limit(limit)
+//       .populate("writer", "name avatar")
+//       .sort("-createdAt");
+
+//     const nextCursor =
+//       videos.length > 0 ? videos[videos.length - 1]._id.toString() : null;
+
+//     return res.status(200).json({
+//       success: true,
+//       videos,
+//       nextCursor,
+//     });
+//   } catch (error) {
+//     console.error(error);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Internal Server Error",
+//     });
+//   }
+// };
+
 export const getAllVideos = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
   try {
-    const limit = parseInt(req.query.limit as string, 10) || 12;
-    const cursor = req.query.cursor as string;
-
-    const query: any = {};
-    if (cursor) {
-      query._id = { $gt: new mongoose.Types.ObjectId(cursor) };
-    }
-
-    const videos = await VideoModel.find(query)
+    const page = parseInt(req.query.page as string, 10) || 1;
+    const limit = parseInt(req.query.limit as string, 10) || 6;
+    const skip = (page - 1) * limit;
+    const total = await VideoModel.countDocuments();
+    const videos = await VideoModel.find()
+      .select("title videoThumbnail videoUrl totalView createdAt")
       .limit(limit)
+      .skip(skip)
       .populate("writer", "name avatar")
-      .sort("-createdAt");
-
-    const nextCursor =
-      videos.length > 0 ? videos[videos.length - 1]._id.toString() : null;
+      .sort("-createdAt")
+      .lean();
 
     return res.status(200).json({
       success: true,
       videos,
-      nextCursor,
+      totalPage: Math.ceil(total / limit),
+      currentPage: page,
     });
   } catch (error) {
     console.error(error);
-
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",

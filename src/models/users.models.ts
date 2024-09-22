@@ -34,7 +34,8 @@ const UserSchema = new mongoose.Schema(
     },
     background: {
       type: String,
-      default: "https://example.com/default-background.png",
+      default:
+        "https://res.cloudinary.com/dkbothcn5/image/upload/v1727019261/t%E1%BA%A3i_xu%E1%BB%91ng_i2b6sd.jpg",
     },
     description: {
       type: String,
