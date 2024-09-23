@@ -25,7 +25,7 @@ const UserSchema = new mongoose.Schema(
     avatar: {
       type: String,
       default:
-        "https://res.cloudinary.com/dkbothcn5/image/upload/v1726651538/h-tube-image/computed-filename-using-request.jpg",
+        "https://res.cloudinary.com/dkbothcn5/image/upload/v1727074201/images.jpg",
     },
     roleId: {
       type: String,

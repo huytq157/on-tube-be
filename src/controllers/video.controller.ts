@@ -51,7 +51,7 @@ export const getAllVideos = async (
 ): Promise<Response> => {
   try {
     const page = parseInt(req.query.page as string, 10) || 1;
-    const limit = parseInt(req.query.limit as string, 10) || 6;
+    const limit = parseInt(req.query.limit as string, 10) || 12;
     const skip = (page - 1) * limit;
     const total = await VideoModel.countDocuments();
     const videos = await VideoModel.find()

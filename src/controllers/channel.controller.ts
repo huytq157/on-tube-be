@@ -39,7 +39,7 @@ export const getChannelVideo = async (
 ): Promise<Response> => {
   const channelId = req.params.id;
   const page = parseInt(req.query.page as string, 10) || 1;
-  const limit = parseInt(req.query.limit as string, 10) || 6;
+  const limit = parseInt(req.query.limit as string, 10) || 12;
   const skip = (page - 1) * limit;
 
   try {
@@ -54,6 +54,7 @@ export const getChannelVideo = async (
       success: true,
       videos,
       totalPage: Math.ceil(total / limit),
+      total,
     });
   } catch (error) {
     console.error(error);
