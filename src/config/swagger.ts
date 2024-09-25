@@ -38,8 +38,6 @@ const swaggerOptions = {
   apis: ["./src/routers/*.ts", "./src/models/*.ts"],
 };
 
-console.log("SWAGGER_URL:", process.env.SWAGGER_URL);
-
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
 export const setupSwagger = (app: Application) => {

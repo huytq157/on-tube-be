@@ -9,42 +9,6 @@ interface CustomRequest extends Request {
   userId?: string;
 }
 
-// export const getAllVideos = async (
-//   req: Request,
-//   res: Response
-// ): Promise<Response> => {
-//   try {
-//     const limit = parseInt(req.query.limit as string, 10) || 12;
-//     const cursor = req.query.cursor as string;
-
-//     const query: any = {};
-//     if (cursor) {
-//       query._id = { $gt: new mongoose.Types.ObjectId(cursor) };
-//     }
-
-//     const videos = await VideoModel.find(query)
-//       .limit(limit)
-//       .populate("writer", "name avatar")
-//       .sort("-createdAt");
-
-//     const nextCursor =
-//       videos.length > 0 ? videos[videos.length - 1]._id.toString() : null;
-
-//     return res.status(200).json({
-//       success: true,
-//       videos,
-//       nextCursor,
-//     });
-//   } catch (error) {
-//     console.error(error);
-
-//     return res.status(500).json({
-//       success: false,
-//       message: "Internal Server Error",
-//     });
-//   }
-// };
-
 export const getAllVideos = async (
   req: Request,
   res: Response
@@ -53,12 +17,26 @@ export const getAllVideos = async (
     const page = parseInt(req.query.page as string, 10) || 1;
     const limit = parseInt(req.query.limit as string, 10) || 12;
     const skip = (page - 1) * limit;
-    const total = await VideoModel.countDocuments();
-    const videos = await VideoModel.find()
-      .select("title videoThumbnail videoUrl totalView createdAt")
+
+    const category = req.query.category as string;
+
+    const filter: any = {};
+
+    if (category) {
+      if (mongoose.Types.ObjectId.isValid(category)) {
+        filter.category = category;
+      }
+    }
+
+    const total = await VideoModel.countDocuments(filter);
+    const videos = await VideoModel.find(filter)
+      .select(
+        "title videoThumbnail videoUrl isPublic publishedDate totalView  createdAt"
+      )
       .limit(limit)
       .skip(skip)
       .populate("writer", "name avatar")
+      .populate("category", "title")
       .sort("-createdAt")
       .lean();
 
@@ -67,6 +45,7 @@ export const getAllVideos = async (
       videos,
       totalPage: Math.ceil(total / limit),
       currentPage: page,
+      total,
     });
   } catch (error) {
     console.error(error);
@@ -91,6 +70,7 @@ export const addVideo = async (req: CustomRequest, res: Response) => {
       description,
       videoUrl,
       isPublic,
+      allowComments,
       category,
       playlist,
       tags,
@@ -152,6 +132,7 @@ export const addVideo = async (req: CustomRequest, res: Response) => {
       description,
       videoUrl,
       isPublic,
+      allowComments,
       category: validCategory,
       playlist: validPlaylist,
       tags,
@@ -186,6 +167,7 @@ export const updateVideo = async (req: CustomRequest, res: Response) => {
       description,
       videoUrl,
       isPublic,
+      allowComments,
       category,
       playlist,
       tags,
@@ -252,13 +234,17 @@ export const updateVideo = async (req: CustomRequest, res: Response) => {
         description: description || video.description,
         videoUrl: videoUrl || video.videoUrl,
         isPublic: typeof isPublic === "boolean" ? isPublic : video.isPublic,
+        allowComments:
+          typeof allowComments === "boolean"
+            ? allowComments
+            : video.allowComments,
         category: validCategory,
         playlist: validPlaylist,
         tags: tags || video.tags,
         videoThumbnail: videoThumbnail || video.videoThumbnail,
         publishedDate: publishedDate || video.publishedDate,
       },
-      { new: true } // Trả về tài liệu đã được cập nhật
+      { new: true }
     );
 
     return res.status(200).json({

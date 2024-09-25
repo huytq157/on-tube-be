@@ -255,7 +255,7 @@ export default router;
  * /api/video/list:
  *   get:
  *     tags: [Videos]
- *     summary: Lấy tất cả video
+ *     summary: Lấy tất cả video, có thể lọc theo category
  *     parameters:
  *       - name: page
  *         in: query
@@ -269,6 +269,12 @@ export default router;
  *         schema:
  *           type: integer
  *           example: 6
+ *       - name: category
+ *         in: query
+ *         required: false
+ *         schema:
+ *           type: string
+ *           example:
  *     responses:
  *       200:
  *         description: Successfully retrieved the list of videos
@@ -292,6 +298,12 @@ export default router;
  *                   type: integer
  *                   description: Current page number
  *                   example: 1
+ *       400:
+ *         description: Invalid category ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: Internal server error
  *         content:
@@ -732,6 +744,10 @@ export default router;
  *               isPublic:
  *                 type: boolean
  *                 description: Indicates whether the video is public
+ *                 example: true
+ *               allowComments:
+ *                 type: boolean
+ *                 description: Indicates whether the video is allowComments
  *                 example: true
  *               category:
  *                 type: string
