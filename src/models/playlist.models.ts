@@ -11,13 +11,13 @@ const PlaylistSchema = new mongoose.Schema(
       required: true,
     },
     writer: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
     videos: [
       {
-        type: mongoose.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: "Video",
       },
     ],

@@ -40,8 +40,17 @@ export const getAllPlayList = async (req: CustomRequest, res: Response) => {
 
   try {
     const playlists = await PlaylistModel.find({ writer: userId })
-      .populate("writer", "name email")
-      .populate("videos", "title description");
+      .populate("writer", "name avatar")
+      .populate({
+        path: "videos",
+        select: "title videoUrl writer videoThumbnail totalView",
+        populate: {
+          path: "writer",
+          select: "name avatar",
+        },
+      });
+
+    console.log(playlists);
 
     res.status(200).json({ message: "Success", playlists });
   } catch (error) {

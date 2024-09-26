@@ -37,6 +37,7 @@ export const getAllVideos = async (
       .skip(skip)
       .populate("writer", "name avatar")
       .populate("category", "title")
+      .populate("playlist", "title")
       .sort("-createdAt")
       .lean();
 
@@ -143,6 +144,14 @@ export const addVideo = async (req: CustomRequest, res: Response) => {
 
     await newVideo.save();
 
+    if (validPlaylist) {
+      await PlaylistModel.findByIdAndUpdate(
+        validPlaylist,
+        { $push: { videos: newVideo._id } },
+        { new: true }
+      );
+    }
+
     return res.status(201).json({
       success: true,
       message: "Video uploaded successfully!",
@@ -247,6 +256,27 @@ export const updateVideo = async (req: CustomRequest, res: Response) => {
       { new: true }
     );
 
+    // Nếu playlist có thay đổi, cập nhật playlist
+    if (video.playlist !== validPlaylist) {
+      // Nếu video trước đó có playlist, xóa video khỏi playlist đó
+      if (video.playlist) {
+        await PlaylistModel.findByIdAndUpdate(
+          video.playlist,
+          { $pull: { videos: videoId } },
+          { new: true }
+        );
+      }
+
+      // Nếu validPlaylist không null, thêm video vào playlist mới
+      if (validPlaylist) {
+        await PlaylistModel.findByIdAndUpdate(
+          validPlaylist,
+          { $addToSet: { videos: videoId } },
+          { new: true }
+        );
+      }
+    }
+
     return res.status(200).json({
       success: true,
       message: "Video updated successfully!",
@@ -295,8 +325,79 @@ export const searchVideo = async (req: Request, res: Response) => {
 };
 
 export const getTrendingVideos = async (req: Request, res: Response) => {
+  const limit = parseInt(req.query.limit as string) || 12;
+  const page = parseInt(req.query.page as string) || 1;
+  const skip = (page - 1) * limit;
+
   try {
-  } catch (error) {}
+    const trendingVideos = await VideoModel.aggregate([
+      {
+        $match: { isPublic: true },
+      },
+      {
+        $addFields: {
+          trendScore: {
+            $add: [
+              { $multiply: ["$totalView", 1] },
+              { $multiply: ["$likesCount", 2] },
+              { $multiply: ["$commentsCount", 1.5] },
+              {
+                $cond: [
+                  {
+                    $gte: [
+                      "$publishedDate",
+                      new Date(new Date().setDate(new Date().getDate() - 7)),
+                    ],
+                  },
+                  10,
+                  0,
+                ],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $sort: { trendScore: -1, publishedDate: -1 },
+      },
+      {
+        $limit: limit,
+      },
+      {
+        $skip: skip,
+      },
+      {
+        $project: {
+          title: 1,
+          videoThumbnail: 1,
+          videoUrl: 1,
+          isPublic: 1,
+          publishedDate: 1,
+          totalView: 1,
+          createdAt: 1,
+          writer: 1,
+          category: 1,
+        },
+      },
+    ]);
+
+    const videosWithDetails = await VideoModel.populate(trendingVideos, [
+      { path: "writer", select: "name avatar" },
+      { path: "category", select: "title" },
+    ]);
+
+    return res.status(200).json({
+      statusCode: 200,
+      message: "Success",
+      data: videosWithDetails,
+    });
+  } catch (error) {
+    console.error("Error in getting trending videos:", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Server Error",
+    });
+  }
 };
 
 export const deleteVideo = async (
