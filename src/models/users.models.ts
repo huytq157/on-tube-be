@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 const UserSchema = new mongoose.Schema(
   {
@@ -41,6 +41,13 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: "This is the user description.",
     },
+    watchedVideos: [
+      {
+        video: { type: Schema.Types.ObjectId, ref: "Video" },
+        watchTime: { type: Number },
+        watchedAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   {
     timestamps: true,

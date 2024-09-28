@@ -5,6 +5,7 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import { setupSwagger } from "./config/swagger";
 import cookieParser from "cookie-parser";
+import "./config/cronJobs";
 
 import authRoutes from "./routers/auth.routes";
 import uploadRoute from "./routers/upload.routes";

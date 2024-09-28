@@ -3,16 +3,22 @@ const router = express.Router();
 
 import {
   addPlayList,
+  deletePlayList,
   getAllPlayList,
+  getPlaylistDetails,
   removeVideoFromPlaylist,
   saveVideoToPlaylist,
+  updatePlaylist,
 } from "../controllers/playList.controller";
 import { verifyToken } from "../middleware/verifyToken";
 
 router.post("/", verifyToken, addPlayList);
 router.get("/list", verifyToken, getAllPlayList);
+router.get("/:id", verifyToken, getPlaylistDetails);
 router.post("/save-to-playlist", verifyToken, saveVideoToPlaylist);
 router.delete("/remove-to-playlist", verifyToken, removeVideoFromPlaylist);
+router.patch("/:id", verifyToken, updatePlaylist);
+router.delete("/:id", verifyToken, deletePlayList);
 
 export default router;
 
@@ -97,6 +103,120 @@ export default router;
  *                 message:
  *                   type: string
  *                   example: "Missing required fields"
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Server error"
+ *     security:
+ *       - bearerAuth: []
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
+
+/**
+ * @swagger
+ * /api/playlist/{id}:
+ *   patch:
+ *     tags: [Playlists]
+ *     summary: Cập nhật danh sách phát
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the playlist to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: The title of the playlist.
+ *                 example: "Updated Playlist Title"
+ *               description:
+ *                 type: string
+ *                 description: A brief description of the playlist.
+ *                 example: "Updated description of the playlist."
+ *               videos:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: An array of video IDs to include in the playlist.
+ *                 example: ["60c72b2f5f1b2c001f3b2e4e", "60c72b3f5f1b2c001f3b2e4f"]
+ *               isPublic:
+ *                 type: boolean
+ *                 description: Whether the playlist is public or private.
+ *                 example: true
+ *     responses:
+ *       200:
+ *         description: Playlist updated successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Playlist updated successfully"
+ *                 playlist:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       description: The unique identifier of the playlist.
+ *                     title:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     writer:
+ *                       type: string
+ *                       description: The user ID of the playlist creator.
+ *                     videos:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     isPublic:
+ *                       type: boolean
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: Bad request if the required fields are missing or invalid.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Playlist ID is required"
+ *       404:
+ *         description: Playlist not found or user doesn't have permission to update it.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Playlist not found or you don't have permission to update"
  *       500:
  *         description: Internal server error.
  *         content:

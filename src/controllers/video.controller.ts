@@ -4,6 +4,8 @@ import { CategoryModel } from "../models/category.models";
 import { PlaylistModel } from "../models/playlist.models";
 import { TagModel } from "../models/tag.models";
 import mongoose from "mongoose";
+import { UserModel } from "../models/users.models";
+import { WatchedVideoModel } from "../models/watchvideo.models";
 
 interface CustomRequest extends Request {
   userId?: string;
@@ -445,7 +447,7 @@ export const deleteVideo = async (
   }
 };
 
-export const descView = async (req: Request, res: Response) => {
+export const descView = async (req: CustomRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { watchTime } = req.body;
@@ -471,6 +473,93 @@ export const descView = async (req: Request, res: Response) => {
     }
   } catch (error) {
     return res.status(500).json({ message: "Server error", error });
+  }
+};
+
+export const descViewAuth = async (req: CustomRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { watchTime } = req.body;
+    const userId = req.userId as string | undefined;
+
+    if (watchTime >= 60) {
+      const updatedVideo = await VideoModel.findByIdAndUpdate(
+        id,
+        { $inc: { totalView: 1 } },
+        { new: true }
+      );
+
+      if (!updatedVideo) {
+        return res.status(404).json({ message: "Video not found" });
+      }
+
+      if (userId) {
+        const watchedVideoExists = await WatchedVideoModel.findOne({
+          user: userId,
+          video: id,
+        });
+
+        if (!watchedVideoExists) {
+          await WatchedVideoModel.create({
+            user: userId,
+            video: id,
+            watchTime,
+          });
+        } else {
+          // Nếu đã có trong danh sách, cập nhật thời gian xem
+          watchedVideoExists.watchTime = watchTime;
+          await watchedVideoExists.save();
+        }
+      }
+
+      // Trả về kết quả khi đã tăng lượt xem thành công
+      return res.status(200).json({
+        message: "View added and watch history updated",
+        video: updatedVideo,
+      });
+    } else {
+      return res.status(400).json({
+        message: "Watch time must be at least 60 seconds",
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Server error",
+      error,
+    });
+  }
+};
+
+export const getWatchedVideos = async (req: Request, res: Response) => {
+  const userId = req.params.userId;
+
+  try {
+    const twoWeeksAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    await WatchedVideoModel.deleteMany({
+      user: userId,
+      watchedAt: { $lt: twoWeeksAgo },
+    });
+
+    const watchedVideos = await WatchedVideoModel.find({ user: userId })
+      .populate({
+        path: "video",
+        select: "videoUrl createdAt videoThumbnail isPublic title",
+        populate: {
+          path: "writer",
+          select: "avatar name",
+        },
+      })
+      .exec();
+
+    if (!watchedVideos) {
+      return res.status(404).json({ message: "No watched videos found." });
+    }
+
+    res.status(200).json(watchedVideos);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error });
   }
 };
 

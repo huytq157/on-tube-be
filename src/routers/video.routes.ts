@@ -11,6 +11,8 @@ import {
   updateVideo,
   descView,
   getVideoRecommend,
+  getWatchedVideos,
+  descViewAuth,
 } from "../controllers/video.controller";
 import { verifyToken } from "../middleware/verifyToken";
 import {
@@ -30,9 +32,83 @@ router.post("/add", verifyToken, addVideo);
 router.get("/:id", getVideobyId);
 router.patch("/:id", verifyToken, updateVideo);
 router.post("/watch/:id", descView);
+router.post("/watch/auth/:id", verifyToken, descViewAuth);
 router.get("/list/recommend/:id", getVideoRecommend);
+router.get("/user/:userId/history", verifyToken, getWatchedVideos);
 
 export default router;
+
+/**
+ * @swagger
+ * /api/video/watched-videos:
+ *   get:
+ *     tags: [Videos]
+ *     summary: Get a list of videos that the user has watched
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the list of watched videos.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Successfully retrieved watched videos."
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       videoId:
+ *                         type: string
+ *                         description: ID of the watched video
+ *                         example: "60c72b2f5f1b2c001f3b2e4e"
+ *                       title:
+ *                         type: string
+ *                         description: Title of the watched video
+ *                         example: "How to Learn JavaScript"
+ *                       description:
+ *                         type: string
+ *                         description: Description of the watched video
+ *                         example: "A comprehensive guide to learning JavaScript."
+ *                       watchedDate:
+ *                         type: string
+ *                         format: date-time
+ *                         description: The date and time when the video was watched
+ *                         example: "2023-09-01T12:34:56Z"
+ *       401:
+ *         description: Unauthorized if the user is not authenticated.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Unauthorized"
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Server error, please try again later."
+ *     security:
+ *       - bearerAuth: []
+ */
 
 /**
  * @swagger
