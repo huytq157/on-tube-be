@@ -3,12 +3,14 @@ import {
   getChannelInfo,
   getChannelVideo,
   searchChannel,
+  getChannelPlaylist,
 } from "../controllers/channel.controller";
 const router = express.Router();
 
 router.get("/search", searchChannel);
 router.get("/:id", getChannelInfo);
 router.get("/video/:id", getChannelVideo);
+router.get("/playlist/:id", getChannelPlaylist);
 
 /**
  * @swagger
@@ -136,6 +138,81 @@ router.get("/video/:id", getChannelVideo);
  *                   type: integer
  *       400:
  *         description: Channel not found
+ *       500:
+ *         description: Server error
+ */
+
+/**
+ * @swagger
+ * /api/channel/playlist/{id}:
+ *   get:
+ *     summary: Danh sách phát của channel
+ *     tags: [Channels]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: isPublic
+ *         schema:
+ *           type: boolean
+ *           default: true
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 12
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved playlists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 playlists:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       title:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       writer:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                           name:
+ *                             type: string
+ *                       videos:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                       isPublic:
+ *                         type: boolean
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
+ *                 totalPage:
+ *                   type: integer
+ *                 total:
+ *                   type: integer
+ *       400:
+ *         description: Invalid channel ID or parameters
  *       500:
  *         description: Server error
  */

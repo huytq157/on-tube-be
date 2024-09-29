@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import mongoose from "mongoose";
 import { UserModel } from "../models/users.models";
 import { VideoModel } from "../models/video.models";
+import { PlaylistModel } from "../models/playlist.models";
 
 export const getChannelInfo = async (
   req: Request,
@@ -41,10 +42,17 @@ export const getChannelVideo = async (
   const page = parseInt(req.query.page as string, 10) || 1;
   const limit = parseInt(req.query.limit as string, 10) || 12;
   const skip = (page - 1) * limit;
+  const isPublic = req.query.isPublic === "true";
 
   try {
-    const total = await VideoModel.countDocuments({ writer: channelId });
-    const videos = await VideoModel.find({ writer: channelId })
+    const total = await VideoModel.countDocuments({
+      writer: channelId,
+      isPublic: isPublic,
+    });
+    const videos = await VideoModel.find({
+      writer: channelId,
+      isPublic: isPublic,
+    })
       .skip(skip)
       .limit(limit)
       .populate("writer")
@@ -53,6 +61,60 @@ export const getChannelVideo = async (
     return res.json({
       success: true,
       videos,
+      totalPage: Math.ceil(total / limit),
+      total,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error!",
+    });
+  }
+};
+
+export const getChannelPlaylist = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const channelId = req.params.id;
+  const page = parseInt(req.query.page as string, 10) || 1;
+  const limit = parseInt(req.query.limit as string, 10) || 12;
+  const skip = (page - 1) * limit;
+  const isPublic = req.query.isPublic === "true";
+
+  try {
+    const total = await PlaylistModel.countDocuments({
+      writer: channelId,
+      isPublic: isPublic,
+    });
+
+    const playlists = await PlaylistModel.find({
+      writer: channelId,
+      isPublic: isPublic,
+    })
+      .skip(skip)
+      .limit(limit)
+      .populate({
+        path: "writer",
+        select: "_id name avatar",
+      })
+      .populate({
+        path: "videos",
+        populate: {
+          path: "writer",
+          select: "_id name avatar",
+        },
+        select: "_id title videoUrl videoThumbnail totalView",
+        options: {
+          sort: { createdAt: -1 },
+        },
+      })
+      .sort("-createdAt");
+
+    return res.json({
+      success: true,
+      playlists,
       totalPage: Math.ceil(total / limit),
       total,
     });

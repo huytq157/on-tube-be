@@ -9,12 +9,14 @@ import {
   removeVideoFromPlaylist,
   saveVideoToPlaylist,
   updatePlaylist,
+  getPlaylistById,
 } from "../controllers/playList.controller";
 import { verifyToken } from "../middleware/verifyToken";
 
 router.post("/", verifyToken, addPlayList);
 router.get("/list", verifyToken, getAllPlayList);
-router.get("/:id", verifyToken, getPlaylistDetails);
+router.get("/user/:id", verifyToken, getPlaylistDetails);
+router.get("/:id", getPlaylistById);
 router.post("/save-to-playlist", verifyToken, saveVideoToPlaylist);
 router.delete("/remove-to-playlist", verifyToken, removeVideoFromPlaylist);
 router.patch("/:id", verifyToken, updatePlaylist);

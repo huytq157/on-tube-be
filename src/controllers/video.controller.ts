@@ -21,6 +21,7 @@ export const getAllVideos = async (
     const skip = (page - 1) * limit;
 
     const category = req.query.category as string;
+    const isPublic = req.query.isPublic === "true";
 
     const filter: any = {};
 
@@ -28,6 +29,10 @@ export const getAllVideos = async (
       if (mongoose.Types.ObjectId.isValid(category)) {
         filter.category = category;
       }
+    }
+
+    if (req.query.isPublic) {
+      filter.isPublic = isPublic;
     }
 
     const total = await VideoModel.countDocuments(filter);

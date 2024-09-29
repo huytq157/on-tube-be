@@ -49,13 +49,15 @@ export const getAllPlayList = async (req: CustomRequest, res: Response) => {
           path: "writer",
           select: "name avatar",
         },
+        options: {
+          sort: { createdAt: -1 },
+        },
       })
       .skip(skip)
       .limit(limit);
     const total = await PlaylistModel.countDocuments({
       writer: userId,
     });
-    console.log(playlists);
 
     res.status(200).json({
       message: "Success",
@@ -248,7 +250,9 @@ export const getPlaylistDetails = async (req: CustomRequest, res: Response) => {
     const videoDetails = await VideoModel.find({
       _id: { $in: playlist.videos },
     })
-      .select("videoUrl title videoThumbnail writer totalView createdAt")
+      .select(
+        "videoUrl title videoThumbnail isPublic writer totalView createdAt"
+      )
       .populate({
         path: "writer",
         select: "name avatar",
@@ -258,7 +262,53 @@ export const getPlaylistDetails = async (req: CustomRequest, res: Response) => {
       message: "Playlist details retrieved successfully",
       playlist: {
         ...playlist.toObject(),
-        videos: videoDetails, // Thay thế trường videos bằng chi tiết video
+        videos: videoDetails,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getPlaylistById = async (req: CustomRequest, res: Response) => {
+  const playlistId = req.params.id;
+
+  if (!playlistId) {
+    return res.status(400).json({ message: "Playlist ID is required" });
+  }
+
+  try {
+    const playlist = await PlaylistModel.findOne({
+      _id: playlistId,
+    }).populate({
+      path: "writer",
+      select: "name",
+    });
+
+    if (!playlist) {
+      return res.status(404).json({
+        message: "Playlist not found or you don't have permission to view",
+      });
+    }
+
+    const videoDetails = await VideoModel.find({
+      _id: { $in: playlist.videos },
+    })
+      .select(
+        "videoUrl title videoThumbnail isPublic writer totalView createdAt"
+      )
+      .populate({
+        path: "writer",
+        select: "name avatar",
+      })
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      message: "Playlist details retrieved successfully",
+      playlist: {
+        ...playlist.toObject(),
+        videos: videoDetails,
       },
     });
   } catch (error) {
