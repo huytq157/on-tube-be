@@ -68,7 +68,7 @@ export const updateComment = async (
   res: Response
 ): Promise<Response> => {
   const { comment } = req.body;
-  const { comment_id } = req.params;
+  const commentId = req.params.id;
   const userId = req.userId;
 
   if (!comment) {
@@ -78,18 +78,21 @@ export const updateComment = async (
   }
 
   try {
-    const existingComment = await CommentModel.findOne({
-      _id: comment_id,
-      user: userId,
-    });
+    const existingComment = await CommentModel.findById(commentId);
 
     if (!existingComment) {
       return res.status(404).json({
         success: false,
-        message: "Comment not found or user unauthorized",
+        message: "Comment not found",
       });
     }
 
+    if (existingComment.user.toString() !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "User unauthorized to update this comment",
+      });
+    }
     existingComment.comment = comment;
     await existingComment.save();
 
@@ -109,23 +112,27 @@ export const deleteComment = async (
   req: CustomRequest,
   res: Response
 ): Promise<Response> => {
-  const { comment_id } = req.params;
+  const commentId = req.params.id;
   const userId = req.userId;
 
   try {
-    const existingComment = await CommentModel.findOne({
-      _id: comment_id,
-      user: userId,
-    });
+    const existingComment = await CommentModel.findById(commentId);
 
     if (!existingComment) {
       return res.status(404).json({
         success: false,
-        message: "Comment not found or user unauthorized",
+        message: "Comment not found",
       });
     }
 
-    await CommentModel.deleteOne({ _id: comment_id, user: userId });
+    if (existingComment.user.toString() !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "User unauthorized to delete this comment",
+      });
+    }
+
+    await CommentModel.deleteOne({ _id: commentId });
 
     return res.json({ success: true, message: "Comment deleted successfully" });
   } catch (error) {
