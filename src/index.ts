@@ -15,6 +15,7 @@ import categoryRoute from "./routers/category.routes";
 import tagRoute from "./routers/tag.routes";
 import channelRoute from "./routers/channel.routes";
 import commentRoute from "./routers/comment.routes";
+import subcriptionRoute from "./routers/subcription.routes";
 
 import { createProxyMiddleware } from "http-proxy-middleware";
 
@@ -59,6 +60,7 @@ app.use("/api/categories", categoryRoute);
 app.use("/api/tags", tagRoute);
 app.use("/api/channel", channelRoute);
 app.use("/api/comments", commentRoute);
+app.use("/api/subcription", subcriptionRoute);
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
