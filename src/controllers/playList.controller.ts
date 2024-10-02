@@ -10,7 +10,7 @@ export const addPlayList = async (req: CustomRequest, res: Response) => {
   const { title, description, isPublic } = req.body;
   const userId = req.userId;
 
-  if (!title || !description) {
+  if (!title || !isPublic) {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
