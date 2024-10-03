@@ -71,7 +71,7 @@ export const getSubscribedChannels = async (
 
     const subscriptions = await SubscriptionModel.find({ userId }).populate(
       "channelId",
-      "name avatar email"
+      "name avatar email description"
     );
 
     const subscribedChannels = subscriptions.map((sub) => sub.channelId);

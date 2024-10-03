@@ -159,3 +159,39 @@ export const searchChannel = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const updateChannel = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const channelId = req.params.id;
+  const { name, avatar, background, description } = req.body;
+
+  try {
+    const channel = await UserModel.findById(channelId);
+    if (!channel) {
+      return res.status(404).json({
+        success: false,
+        message: "Channel not found!",
+      });
+    }
+
+    if (name) channel.name = name;
+    if (avatar) channel.avatar = avatar;
+    if (background) channel.background = background;
+    if (description) channel.description = description;
+
+    await channel.save();
+
+    return res.json({
+      success: true,
+      channel,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error!",
+    });
+  }
+};
