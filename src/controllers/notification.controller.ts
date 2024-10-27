@@ -84,12 +84,28 @@ export const getNotification = async (req: CustomRequest, res: Response) => {
 };
 
 export const updateStatusSeen = async (req: Request, res: Response) => {
-  const user_id = req.body._id;
+  const { notificationId, user_id } = req.body;
+
+  if (!notificationId || !user_id) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing notification ID or user ID" });
+  }
 
   try {
-    await NotificationModel.updateMany({ user: user_id }, { read: true });
+    const result = await NotificationModel.updateOne(
+      { _id: notificationId, user: user_id },
+      { read: true }
+    );
 
-    res.json({ success: true });
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found or access denied",
+      });
+    }
+
+    res.json({ success: true, message: "Notification marked as read" });
   } catch (error) {
     res
       .status(500)
