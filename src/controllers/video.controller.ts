@@ -457,7 +457,7 @@ export const descView = async (req: CustomRequest, res: Response) => {
     const { id } = req.params;
     const { watchTime } = req.body;
 
-    if (watchTime >= 60) {
+    if (watchTime >= 1) {
       const updatedVideo = await VideoModel.findByIdAndUpdate(
         id,
         { $inc: { totalView: 1 } },
@@ -487,7 +487,7 @@ export const descViewAuth = async (req: CustomRequest, res: Response) => {
     const { watchTime } = req.body;
     const userId = req.userId as string | undefined;
 
-    if (watchTime >= 60) {
+    if (watchTime >= 1) {
       const updatedVideo = await VideoModel.findByIdAndUpdate(
         id,
         { $inc: { totalView: 1 } },
