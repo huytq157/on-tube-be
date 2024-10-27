@@ -457,7 +457,7 @@ export const descView = async (req: CustomRequest, res: Response) => {
     const { id } = req.params;
     const { watchTime } = req.body;
 
-    if (watchTime >= 60) {
+    if (watchTime >= 1) {
       const updatedVideo = await VideoModel.findByIdAndUpdate(
         id,
         { $inc: { totalView: 1 } },
