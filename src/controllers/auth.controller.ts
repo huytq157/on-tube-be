@@ -7,17 +7,9 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const JWT_SECRET = process.env.PASSJWT;
-const JWT_REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET;
 
 if (!JWT_SECRET) {
   throw new Error("JWT_SECRET environment variable is not set");
-}
-if (!JWT_REFRESH_SECRET) {
-  throw new Error("JWT_SECRET environment variable is not set");
-}
-
-interface CustomRequest extends Request {
-  userId?: string;
 }
 
 export const register = async (req: Request, res: Response) => {
@@ -57,7 +49,7 @@ export const register = async (req: Request, res: Response) => {
         roleId: newUser.roleId,
       },
       JWT_SECRET,
-      { expiresIn: "30s" }
+      { expiresIn: "12h" }
     );
 
     return res.status(201).json({
@@ -74,97 +66,57 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-export const login = async (req: Request, res: Response): Promise<Response> => {
+export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
+    if (!email || !password)
       return res.status(400).json({
         success: false,
-        message: "Missing parameters!",
+        message: "Missing paramaters!",
       });
-    }
 
-    const user = await UserModel.findOne({ email });
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User does not exist!",
-      });
-    }
+    const findUser = await UserModel.findOne({ email });
 
-    const isPasswordValid = await argon2.verify(user.password, password);
-    if (!isPasswordValid) {
+    if (!findUser)
       return res.status(400).json({
         success: false,
-        message: "Incorrect password!",
+        message: "User not exits!",
       });
-    }
 
-    const accessToken = jwt.sign(
-      { userId: user._id, roleId: user.roleId },
+    const checkPass = await argon2.verify(findUser.password, password);
+    if (!checkPass)
+      return res.status(400).json({
+        success: false,
+        message: "Password was wrong!",
+      });
+
+    const token = jwt.sign(
+      {
+        userId: findUser._id,
+        roleId: findUser.roleId,
+      },
       JWT_SECRET,
-      { expiresIn: "3h" }
+      { expiresIn: "12h" }
     );
-
-    const refreshToken = jwt.sign({ userId: user._id }, JWT_REFRESH_SECRET, {
-      expiresIn: "24h",
-    });
 
     return res.status(200).json({
       success: true,
-      message: "Login successful!",
-      accessToken,
-      refreshToken,
+      message: "Login success!",
+      token,
     });
   } catch (error) {
-    console.error("Login error:", error);
+    console.log(error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message: "Server not found!",
     });
   }
 };
 
-export const refreshToken = async (req: Request, res: Response) => {
-  try {
-    const { refreshToken } = req.body;
-
-    if (!refreshToken) {
-      return res.status(400).json({
-        success: false,
-        message: "Refresh token is required!",
-      });
-    }
-
-    jwt.verify(refreshToken, JWT_REFRESH_SECRET, (err: any, decoded: any) => {
-      if (err || !decoded) {
-        return res.status(403).json({
-          success: false,
-          message: "Invalid or expired refresh token.",
-        });
-      }
-
-      const { userId, roleId } = decoded as jwt.JwtPayload;
-
-      const newAccessToken = jwt.sign({ userId, roleId }, JWT_SECRET, {
-        expiresIn: "8h",
-      });
-
-      return res.status(200).json({
-        success: true,
-        message: "Token refreshed successfully!",
-        accessToken: newAccessToken,
-      });
-    });
-  } catch (error) {
-    console.error("Refresh token error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error.",
-    });
-  }
-};
+interface CustomRequest extends Request {
+  userId?: string;
+}
 
 export const getUser = async (req: CustomRequest, res: Response) => {
   const userId = req.userId;
