@@ -7,7 +7,7 @@ import {
   unsubscribeChannel,
   checkSubscription,
   getSubscribedChannelVideos,
-} from "../controllers/subcription.controllers";
+} from "../controllers/subcription.controller";
 import { verifyToken } from "../middleware/verifyToken";
 
 router.post("/sub", verifyToken, subscriptionChannel);

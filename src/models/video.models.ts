@@ -31,10 +31,6 @@ const VideoSchema = new mongoose.Schema(
       type: Schema.Types.ObjectId,
       ref: "Playlist",
     },
-    commentsCount: {
-      type: Number,
-      default: 0,
-    },
     tags: [
       {
         type: String,
@@ -50,17 +46,17 @@ const VideoSchema = new mongoose.Schema(
     publishedDate: {
       type: Date,
     },
-    likesCount: {
-      type: Number,
-      default: 0,
-    },
-    dislikesCount: {
-      type: Number,
-      default: 0,
-    },
     allowComments: {
       type: Boolean,
       default: true,
+    },
+    likeCount: {
+      type: Number,
+      default: 0,
+    },
+    dislikeCount: {
+      type: Number,
+      default: 0,
     },
   },
   {

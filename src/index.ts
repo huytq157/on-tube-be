@@ -17,6 +17,7 @@ import channelRoute from "./routers/channel.routes";
 import commentRoute from "./routers/comment.routes";
 import subcriptionRoute from "./routers/subcription.routes";
 import notificationRoute from "./routers/notification.routes";
+import likeRoute from "./routers/like.routes";
 
 import { createProxyMiddleware } from "http-proxy-middleware";
 
@@ -63,6 +64,7 @@ app.use("/api/channel", channelRoute);
 app.use("/api/comments", commentRoute);
 app.use("/api/subcription", subcriptionRoute);
 app.use("/api/notification", notificationRoute);
+app.use("/api/vote", likeRoute);
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => {

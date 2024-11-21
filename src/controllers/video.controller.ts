@@ -6,6 +6,7 @@ import { TagModel } from "../models/tag.models";
 import mongoose from "mongoose";
 import { UserModel } from "../models/users.models";
 import { WatchedVideoModel } from "../models/watchvideo.models";
+import { LikeModel } from "../models/like.models";
 
 interface CustomRequest extends Request {
   userId?: string;
@@ -511,13 +512,10 @@ export const descViewAuth = async (req: CustomRequest, res: Response) => {
             watchTime,
           });
         } else {
-          // Nếu đã có trong danh sách, cập nhật thời gian xem
           watchedVideoExists.watchTime = watchTime;
           await watchedVideoExists.save();
         }
       }
-
-      // Trả về kết quả khi đã tăng lượt xem thành công
       return res.status(200).json({
         message: "View added and watch history updated",
         video: updatedVideo,
@@ -573,11 +571,7 @@ export const getVideobyId = async (
   res: Response
 ): Promise<Response> => {
   const { id } = req.params;
-
-  console.time("getVideobyId");
-
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    console.timeEnd("getVideobyId");
     return res.status(400).json({
       success: false,
       message: "Invalid video ID",
@@ -591,22 +585,17 @@ export const getVideobyId = async (
       .lean();
 
     if (!video) {
-      console.timeEnd("getVideobyId");
       return res.status(404).json({
         success: false,
         message: "Video not found!",
       });
     }
 
-    console.timeEnd("getVideobyId");
-
     return res.status(200).json({
       success: true,
       video,
     });
   } catch (error) {
-    console.error(error);
-    console.timeEnd("getVideobyId");
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
@@ -615,7 +604,7 @@ export const getVideobyId = async (
 };
 
 export const getVideoRecommend = async (req: Request, res: Response) => {
-  const { id } = req.params; // Video ID hiện tại
+  const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(400).json({
@@ -634,25 +623,23 @@ export const getVideoRecommend = async (req: Request, res: Response) => {
       });
     }
 
-    // Lấy các video liên quan dựa trên cùng category hoặc tags
     let recommendedVideos = await VideoModel.find({
-      _id: { $ne: id }, // Loại bỏ video hiện tại
+      _id: { $ne: id },
       $or: [
-        { category: currentVideo.category }, // Cùng category
-        { tags: { $in: currentVideo.tags } }, // Hoặc có chung ít nhất 1 tag
+        { category: currentVideo.category },
+        { tags: { $in: currentVideo.tags } },
       ],
       isPublic: true,
     })
-      .sort({ totalView: -1 }) // Sắp xếp theo số lượt xem giảm dần
+      .sort({ totalView: -1 })
       .limit(10)
       .populate("writer", "name avatar")
       .populate("tags", "name")
       .lean();
 
-    // Nếu không tìm được video nào trùng category hoặc tags
     if (recommendedVideos.length === 0) {
       recommendedVideos = await VideoModel.find({
-        _id: { $ne: id }, // Loại bỏ video hiện tại
+        _id: { $ne: id },
         isPublic: true,
       })
         .sort({ totalView: -1, publishedDate: -1 })

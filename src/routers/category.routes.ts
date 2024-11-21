@@ -5,7 +5,7 @@ import {
   getAllCategories,
   addedCategory,
   getVideobyCategory,
-} from "../controllers/category.controllers";
+} from "../controllers/category.controller";
 
 router.get("/list", getAllCategories);
 router.post("/add", addedCategory);
