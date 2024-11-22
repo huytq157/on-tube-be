@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import { CommentModel } from "../models/comment.models";
 import mongoose, { Types } from "mongoose";
+import { LikeModel } from "../models/like.models";
 
 interface CustomRequest extends Request {
   userId?: string;
@@ -226,6 +227,83 @@ const getNestedReplies = async (parentId: Types.ObjectId): Promise<Reply[]> => {
   return nestedReplies;
 };
 
+// export const getComments = async (
+//   req: CustomRequest,
+//   res: Response
+// ): Promise<Response> => {
+//   const video_id = req.params.video_id;
+//   const userId = req.userId;
+
+//   if (!video_id) {
+//     return res
+//       .status(400)
+//       .json({ success: false, message: "Missing parameter videoId" });
+//   }
+
+//   try {
+//     const comments = await CommentModel.aggregate([
+//       {
+//         $match: {
+//           parent_id: null,
+//           video: new mongoose.Types.ObjectId(video_id),
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: "users",
+//           localField: "user",
+//           foreignField: "_id",
+//           as: "user",
+//         },
+//       },
+//       { $unwind: "$user" },
+//       {
+//         $project: {
+//           _id: "$_id",
+//           comment: 1,
+//           user: {
+//             _id: 1,
+//             name: 1,
+//             avatar: 1,
+//           },
+//           createdAt: 1,
+//           updatedAt: 1,
+//         },
+//       },
+//     ]);
+
+//     const commentsWithReplies: Comment[] = await Promise.all(
+//       comments.map(async (comment) => {
+//         const replies = await getNestedReplies(comment._id);
+//         return {
+//           ...comment,
+//           replies,
+//         };
+//       })
+//     );
+
+//     const totalComments = await CommentModel.countDocuments({
+//       video: new mongoose.Types.ObjectId(video_id),
+//     });
+
+//     return res.json({
+//       success: true,
+//       data: commentsWithReplies.map((item) => ({
+//         ...item,
+//         is_owner: userId
+//           ? item.user._id.toString() === userId.toString()
+//           : false,
+//       })),
+//       totalComments,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     return res
+//       .status(500)
+//       .json({ success: false, message: "Server error occurred", error });
+//   }
+// };
+
 export const getComments = async (
   req: CustomRequest,
   res: Response
@@ -257,6 +335,37 @@ export const getComments = async (
       },
       { $unwind: "$user" },
       {
+        $lookup: {
+          from: "likes", // Join with the "likes" collection to get like/dislike count
+          let: { commentId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$comment", "$$commentId"] },
+              },
+            },
+            {
+              $group: {
+                _id: "$comment",
+                likeCount: {
+                  $sum: { $cond: [{ $eq: ["$type", "like"] }, 1, 0] },
+                },
+                dislikeCount: {
+                  $sum: { $cond: [{ $eq: ["$type", "dislike"] }, 1, 0] },
+                },
+              },
+            },
+          ],
+          as: "likeDislikeCounts",
+        },
+      },
+      {
+        $unwind: {
+          path: "$likeDislikeCounts",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
         $project: {
           _id: "$_id",
           comment: 1,
@@ -267,16 +376,51 @@ export const getComments = async (
           },
           createdAt: 1,
           updatedAt: 1,
+          likeCount: { $ifNull: ["$likeDislikeCounts.likeCount", 0] },
+          dislikeCount: { $ifNull: ["$likeDislikeCounts.dislikeCount", 0] },
         },
       },
     ]);
 
+    // Lấy tất cả các replies cho mỗi comment
     const commentsWithReplies: Comment[] = await Promise.all(
       comments.map(async (comment) => {
+        // Lấy tất cả các replies
         const replies = await getNestedReplies(comment._id);
+
+        // Tính toán likeCount và dislikeCount cho mỗi reply
+        const repliesWithCounts = await Promise.all(
+          replies.map(async (reply) => {
+            const likeDislikeCounts = await LikeModel.aggregate([
+              {
+                $match: {
+                  comment: new mongoose.Types.ObjectId(reply._id),
+                },
+              },
+              {
+                $group: {
+                  _id: "$comment",
+                  likeCount: {
+                    $sum: { $cond: [{ $eq: ["$type", "like"] }, 1, 0] },
+                  },
+                  dislikeCount: {
+                    $sum: { $cond: [{ $eq: ["$type", "dislike"] }, 1, 0] },
+                  },
+                },
+              },
+            ]);
+
+            return {
+              ...reply,
+              likeCount: likeDislikeCounts[0]?.likeCount || 0,
+              dislikeCount: likeDislikeCounts[0]?.dislikeCount || 0,
+            };
+          })
+        );
+
         return {
           ...comment,
-          replies,
+          replies: repliesWithCounts,
         };
       })
     );
