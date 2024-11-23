@@ -48,7 +48,11 @@ export const likeVideo = async (req: CustomRequest, res: Response) => {
     }
 
     await video.save();
-    return res.status(200).json({ message: "Video liked successfully." });
+    return res.status(200).json({
+      message: "Video liked successfully.",
+      likeCount: video.likeCount,
+      dislikeCount: video.dislikeCount,
+    });
   } catch (error) {
     console.error(error);
     return res
@@ -98,7 +102,11 @@ export const dislikeVideo = async (req: CustomRequest, res: Response) => {
     }
 
     await video.save();
-    return res.status(200).json({ message: "Video disliked successfully." });
+    return res.status(200).json({
+      message: "Video disliked successfully.",
+      likeCount: video.likeCount,
+      dislikeCount: video.dislikeCount,
+    });
   } catch (error) {
     console.error(error);
     return res
@@ -189,7 +197,13 @@ export const getLikedVideos = async (req: CustomRequest, res: Response) => {
 
   try {
     const likedVideos = await LikeModel.find({ user: userId, type: "like" })
-      .populate("video")
+      .populate({
+        path: "video",
+        populate: {
+          path: "writer",
+          select: "name avatar",
+        },
+      })
       .exec();
 
     const videos = likedVideos
