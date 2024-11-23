@@ -348,7 +348,6 @@ export const getTrendingVideos = async (req: Request, res: Response) => {
             $add: [
               { $multiply: ["$totalView", 1] },
               { $multiply: ["$likesCount", 2] },
-              { $multiply: ["$commentsCount", 1.5] },
               {
                 $cond: [
                   {

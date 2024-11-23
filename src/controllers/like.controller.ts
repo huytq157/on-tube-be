@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import mongoose from "mongoose";
 import { VideoModel } from "../models/video.models";
 import { LikeModel } from "../models/like.models";
-import { CommentModel } from "../models/comment.models";
 
 interface CustomRequest extends Request {
   userId?: string;
@@ -190,11 +189,6 @@ export const getLikedVideos = async (req: CustomRequest, res: Response) => {
 
   try {
     const likedVideos = await LikeModel.find({ user: userId, type: "like" })
-      // .populate({
-      //   path: "video",
-      //   model: VideoModel,
-      //   populate: [{ path: "writer", select: "name avatar" }],
-      // })
       .populate("video")
       .exec();
 

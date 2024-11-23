@@ -10,7 +10,6 @@ const LikeSchema = new mongoose.Schema(
     video: {
       type: Schema.Types.ObjectId,
       ref: "Video",
-      // required: true,
     },
     comment: {
       type: Schema.Types.ObjectId,
@@ -29,7 +28,5 @@ const LikeSchema = new mongoose.Schema(
 );
 
 LikeSchema.index({ user: 1, video: 1 }, { unique: true });
-// Đảm bảo rằng user chỉ có thể like hoặc dislike một comment cụ thể
-LikeSchema.index({ user: 1, comment: 1 }, { unique: true });
 
 export const LikeModel = mongoose.model("Like", LikeSchema);
