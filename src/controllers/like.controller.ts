@@ -190,11 +190,12 @@ export const getLikedVideos = async (req: CustomRequest, res: Response) => {
 
   try {
     const likedVideos = await LikeModel.find({ user: userId, type: "like" })
-      .populate({
-        path: "video",
-        model: VideoModel,
-        populate: [{ path: "writer", select: "name avatar" }],
-      })
+      // .populate({
+      //   path: "video",
+      //   model: VideoModel,
+      //   populate: [{ path: "writer", select: "name avatar" }],
+      // })
+      .populate("video")
       .exec();
 
     const videos = likedVideos
