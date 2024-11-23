@@ -3,9 +3,6 @@ import {
   likeVideo,
   dislikeVideo,
   checkIsLiked,
-  likeComment,
-  dislikeComment,
-  checkIsLikedComment,
   getLikedVideos,
   checkIsDisliked,
 } from "../controllers/like.controller";
@@ -25,9 +22,6 @@ router.get("/video-like", verifyToken, getLikedVideos);
 router.post("/dislike", verifyToken, dislikeVideo);
 router.get("/check-like/:id", verifyToken, checkIsLiked);
 router.get("/check-dislike/:id", verifyToken, checkIsDisliked);
-router.get("/check-like-comment/:id", verifyToken, checkIsLikedComment);
-router.post("/like-comment", verifyToken, likeComment);
-router.post("/dislike-comment", verifyToken, dislikeComment);
 
 router.use(limiter);
 export default router;
