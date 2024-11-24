@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import { SubscriptionModel } from "../models/subscription.models";
 import { UserModel } from "../models/users.models";
 import { VideoModel } from "../models/video.models";
+import mongoose from "mongoose";
 
 interface CustomRequest extends Request {
   userId?: string;
@@ -202,6 +203,45 @@ export const getSubscribedChannelVideos = async (
     return res.status(500).json({
       success: false,
       message: "Server error. Please try again later.",
+    });
+  }
+};
+
+export const getChannelSubscribersCount = async (
+  req: CustomRequest,
+  res: Response
+) => {
+  try {
+    const { channelId } = req.params;
+
+    if (!channelId) {
+      return res.status(400).json({
+        success: false,
+        message: "Channel ID is required.",
+      });
+    }
+
+    const channelExists = await UserModel.exists({ _id: channelId });
+    if (!channelExists) {
+      return res.status(404).json({
+        success: false,
+        message: "Channel not found.",
+      });
+    }
+
+    const subscriberCount = await SubscriptionModel.countDocuments({
+      channelId,
+    });
+
+    return res.status(200).json({
+      success: true,
+      count: subscriberCount,
+    });
+  } catch (error) {
+    console.error("Error in getChannelSubscribersCount:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server lỗi",
     });
   }
 };
