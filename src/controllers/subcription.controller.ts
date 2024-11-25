@@ -184,7 +184,7 @@ export const getSubscribedChannelVideos = async (
       });
     }
 
-    const subscribedChannelIds = subscriptions.map((sub) => sub.channelId);
+    const subscribedChannelIds = subscriptions?.map((sub) => sub?.channelId);
 
     const videos = await VideoModel.find({
       writer: { $in: subscribedChannelIds },
