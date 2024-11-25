@@ -13,6 +13,7 @@ import {
   getVideoRecommend,
   getWatchedVideos,
   descViewAuth,
+  getUserVideoCount,
 } from "../controllers/video.controller";
 import { verifyToken } from "../middleware/verifyToken";
 import {
@@ -35,6 +36,7 @@ router.post("/watch/:id", descView);
 router.post("/watch/auth/:id", verifyToken, descViewAuth);
 router.get("/list/recommend/:id", getVideoRecommend);
 router.get("/user/:userId/history", verifyToken, getWatchedVideos);
+router.get("/:userId/video-count", getUserVideoCount);
 
 export default router;
 

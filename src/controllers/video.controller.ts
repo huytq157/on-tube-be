@@ -2,12 +2,8 @@ import express, { Request, Response } from "express";
 import { VideoModel } from "../models/video.models";
 import { CategoryModel } from "../models/category.models";
 import { PlaylistModel } from "../models/playlist.models";
-import { TagModel } from "../models/tag.models";
 import mongoose from "mongoose";
-import { UserModel } from "../models/users.models";
 import { WatchedVideoModel } from "../models/watchvideo.models";
-import { LikeModel } from "../models/like.models";
-
 interface CustomRequest extends Request {
   userId?: string;
 }
@@ -657,6 +653,35 @@ export const getVideoRecommend = async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
+    });
+  }
+};
+
+export const getUserVideoCount = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or missing user ID!",
+      });
+    }
+
+    const videoCount = await VideoModel.countDocuments({ writer: userId });
+
+    return res.status(200).json({
+      success: true,
+      videoCount,
+    });
+  } catch (error) {
+    console.error("Error fetching user video count:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error, please try again later.",
     });
   }
 };
