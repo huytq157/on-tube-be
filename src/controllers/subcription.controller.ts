@@ -1,5 +1,6 @@
 import express, { Request, Response } from "express";
 import { SubscriptionModel } from "../models/subscription.models";
+import { NotificationModel } from "../models/notification.models";
 import { UserModel } from "../models/users.models";
 import { VideoModel } from "../models/video.models";
 import mongoose from "mongoose";
@@ -113,6 +114,13 @@ export const unsubscribeChannel = async (req: CustomRequest, res: Response) => {
         message: "Bạn chưa đăng ký kênh này.",
       });
     }
+
+    const exitsubcription = SubscriptionModel.findOneAndDelete({
+      userId: userId,
+      channelId: channelId,
+    });
+
+    console.log("Exitsubcription", exitsubcription);
 
     return res.json({
       success: true,
