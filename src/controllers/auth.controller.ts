@@ -202,7 +202,7 @@ export const googleAuthCallback = [
       secure: process.env.NODE_ENV === "production",
       maxAge: 12 * 60 * 60 * 1000,
     });
-    const redirectUrl = `https://on-tube.vercel.app/`;
+    const redirectUrl = process.env.FRONT_END_URL!;
     res.redirect(redirectUrl);
   },
 ];
