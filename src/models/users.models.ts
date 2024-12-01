@@ -1,6 +1,24 @@
 import mongoose, { Schema } from "mongoose";
 
-const UserSchema = new mongoose.Schema(
+export interface IUser extends Document {
+  _id: string;
+  name: string;
+  email: string;
+  password: string;
+  avatar?: string;
+  roleId: "USER" | "ADMIN";
+  background?: string;
+  description?: string;
+  watchedVideos?: {
+    video: mongoose.Types.ObjectId;
+    watchTime: number;
+    watchedAt: Date;
+  }[];
+  googleId?: string;
+  [key: string]: any;
+}
+
+const UserSchema = new mongoose.Schema<IUser>(
   {
     name: {
       type: String,
@@ -20,7 +38,6 @@ const UserSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, "Password is required"],
     },
     avatar: {
       type: String,
@@ -48,10 +65,11 @@ const UserSchema = new mongoose.Schema(
         watchedAt: { type: Date, default: Date.now },
       },
     ],
+    googleId: { type: String, unique: true },
   },
   {
     timestamps: true,
   }
 );
 
-export const UserModel = mongoose.model("User", UserSchema);
+export const UserModel = mongoose.model<IUser>("User", UserSchema);

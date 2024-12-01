@@ -7,13 +7,14 @@ import {
   updateChannel,
 } from "../controllers/channel.controller";
 import { verifyToken } from "../middleware/verifyToken";
+import { authenticateToken } from "../middleware/authToken";
 const router = express.Router();
 
 router.get("/search", searchChannel);
 router.get("/:id", getChannelInfo);
 router.get("/video/:id", getChannelVideo);
 router.get("/playlist/:id", getChannelPlaylist);
-router.put("/:id", verifyToken, updateChannel);
+router.put("/:id", authenticateToken, updateChannel);
 
 /**
  * @swagger

@@ -4,12 +4,12 @@ import {
   getNotification,
   updateStatusSeen,
 } from "../controllers/notification.controller";
-import { verifyToken } from "../middleware/verifyToken";
+import { authenticateToken } from "../middleware/authToken";
 const router = express.Router();
 
-router.post("/create", verifyToken, createNotification);
-router.get("/gets", verifyToken, getNotification);
-router.put("/update-seen", verifyToken, updateStatusSeen);
+router.post("/create", authenticateToken, createNotification);
+router.get("/gets", authenticateToken, getNotification);
+router.put("/update-seen", authenticateToken, updateStatusSeen);
 
 export default router;
 

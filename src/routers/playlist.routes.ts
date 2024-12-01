@@ -12,15 +12,20 @@ import {
   getPlaylistById,
 } from "../controllers/playList.controller";
 import { verifyToken } from "../middleware/verifyToken";
+import { authenticateToken } from "../middleware/authToken";
 
-router.post("/", verifyToken, addPlayList);
-router.get("/list", verifyToken, getAllPlayList);
-router.get("/user/:id", verifyToken, getPlaylistDetails);
+router.post("/", authenticateToken, addPlayList);
+router.get("/list", authenticateToken, getAllPlayList);
+router.get("/user/:id", authenticateToken, getPlaylistDetails);
 router.get("/:id", getPlaylistById);
-router.post("/save-to-playlist", verifyToken, saveVideoToPlaylist);
-router.delete("/remove-to-playlist", verifyToken, removeVideoFromPlaylist);
-router.patch("/:id", verifyToken, updatePlaylist);
-router.delete("/:id", verifyToken, deletePlayList);
+router.post("/save-to-playlist", authenticateToken, saveVideoToPlaylist);
+router.delete(
+  "/remove-to-playlist",
+  authenticateToken,
+  removeVideoFromPlaylist
+);
+router.patch("/:id", authenticateToken, updatePlaylist);
+router.delete("/:id", authenticateToken, deletePlayList);
 
 export default router;
 

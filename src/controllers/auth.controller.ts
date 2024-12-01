@@ -1,15 +1,19 @@
-import express, { Request, Response } from "express";
-import { UserModel } from "../models/users.models";
+import express, { Request, Response, NextFunction } from "express";
+import { IUser, UserModel } from "../models/users.models";
 import * as argon2 from "argon2";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-
+import passport from "passport";
 dotenv.config();
 
 const JWT_SECRET = process.env.PASSJWT;
 
 if (!JWT_SECRET) {
   throw new Error("JWT_SECRET environment variable is not set");
+}
+
+interface CustomRequest extends Request {
+  userId?: string;
 }
 
 export const register = async (req: Request, res: Response) => {
@@ -73,7 +77,7 @@ export const login = async (req: Request, res: Response) => {
     if (!email || !password)
       return res.status(400).json({
         success: false,
-        message: "Missing paramaters!",
+        message: "Missing parameters!",
       });
 
     const findUser = await UserModel.findOne({ email });
@@ -81,14 +85,14 @@ export const login = async (req: Request, res: Response) => {
     if (!findUser)
       return res.status(400).json({
         success: false,
-        message: "User not exits!",
+        message: "User not exists!",
       });
 
     const checkPass = await argon2.verify(findUser.password, password);
     if (!checkPass)
       return res.status(400).json({
         success: false,
-        message: "Password was wrong!",
+        message: "Password is incorrect!",
       });
 
     const token = jwt.sign(
@@ -100,23 +104,34 @@ export const login = async (req: Request, res: Response) => {
       { expiresIn: "12h" }
     );
 
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 12 * 60 * 60 * 1000,
+    });
+
+    const userInfo = {
+      id: findUser._id,
+      email: findUser.email,
+      roleId: findUser.roleId,
+      name: findUser.name,
+      avatar: findUser.avatar,
+    };
+
     return res.status(200).json({
       success: true,
       message: "Login success!",
-      token,
+      data: userInfo,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return res.status(500).json({
       success: false,
-      message: "Server not found!",
+      message: "Internal server error!",
     });
   }
 };
-
-interface CustomRequest extends Request {
-  userId?: string;
-}
 
 export const getUser = async (req: CustomRequest, res: Response) => {
   const userId = req.userId;
@@ -151,3 +166,43 @@ export const getUser = async (req: CustomRequest, res: Response) => {
     });
   }
 };
+
+export const logout = (req: Request, res: Response) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+  return res.status(200).json({
+    success: true,
+    message: "Logout successful!",
+  });
+};
+
+export const googleAuth = passport.authenticate("google", {
+  scope: ["profile", "email"],
+});
+
+export const googleAuthCallback = [
+  (req: Request, res: Response, next: NextFunction) => {
+    console.log("Callback hit!");
+    next();
+  },
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  (req: Request, res: Response) => {
+    const user = req.user as IUser;
+
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.PASSJWT as string,
+      { expiresIn: "12h" }
+    );
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 12 * 60 * 60 * 1000,
+    });
+    const redirectUrl = `http://localhost:3000`;
+    res.redirect(redirectUrl);
+  },
+];

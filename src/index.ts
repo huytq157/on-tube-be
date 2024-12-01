@@ -5,7 +5,10 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import { setupSwagger } from "./config/swagger";
 import cookieParser from "cookie-parser";
+import passport from "passport";
 import "./config/cronJobs";
+import "./config/auth";
+import session from "express-session";
 
 import authRoutes from "./routers/auth.routes";
 import uploadRoute from "./routers/upload.routes";
@@ -18,7 +21,6 @@ import commentRoute from "./routers/comment.routes";
 import subcriptionRoute from "./routers/subcription.routes";
 import notificationRoute from "./routers/notification.routes";
 import likeRoute from "./routers/like.routes";
-
 import { createProxyMiddleware } from "http-proxy-middleware";
 
 dotenv.config();
@@ -46,6 +48,15 @@ connectDatabase(databaseUrl);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieParser());
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET!,
+    resave: false,
+    saveUninitialized: true,
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
 
 setupSwagger(app);
 app.use(express.static("public"));

@@ -5,5 +5,6 @@ declare global {
     interface Request {
       userId?: string;
     }
+    interface User extends IUser {}
   }
 }

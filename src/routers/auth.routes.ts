@@ -1,12 +1,24 @@
 import express from "express";
 const router = express.Router();
+import passport from "passport";
 
-import { register, login, getUser } from "../controllers/auth.controller";
+import {
+  register,
+  login,
+  getUser,
+  googleAuth,
+  googleAuthCallback,
+  logout,
+} from "../controllers/auth.controller";
 import { verifyToken } from "../middleware/verifyToken";
+import { authenticateToken } from "../middleware/authToken";
 
 router.post("/register", register);
 router.post("/login", login);
-router.get("/user", verifyToken, getUser);
+router.get("/user", authenticateToken, getUser);
+router.post("/logout", logout);
+router.get("/google", googleAuth);
+router.get("/google/callback", googleAuthCallback);
 
 export default router;
 

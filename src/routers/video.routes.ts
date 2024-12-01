@@ -15,27 +15,27 @@ import {
   descViewAuth,
   getUserVideoCount,
 } from "../controllers/video.controller";
-import { verifyToken } from "../middleware/verifyToken";
 import {
   getVideoFavourite,
   addVideoFavourite,
   deleteVideoFavourite,
 } from "../controllers/favourite.controller";
+import { authenticateToken } from "../middleware/authToken";
 
 router.get("/list", getAllVideos);
 router.get("/search", searchVideo);
 router.get("/trending", getTrendingVideos);
-router.delete("/:id", verifyToken, deleteVideo);
-router.get("/favourite", verifyToken, getVideoFavourite);
-router.post("/favourite", verifyToken, addVideoFavourite);
-router.delete("/:videoId", verifyToken, deleteVideoFavourite);
-router.post("/add", verifyToken, addVideo);
+router.delete("/:id", authenticateToken, deleteVideo);
+router.get("/favourite", authenticateToken, getVideoFavourite);
+router.post("/favourite", authenticateToken, addVideoFavourite);
+router.delete("/:videoId", authenticateToken, deleteVideoFavourite);
+router.post("/add", authenticateToken, addVideo);
 router.get("/:id", getVideobyId);
-router.patch("/:id", verifyToken, updateVideo);
+router.patch("/:id", authenticateToken, updateVideo);
 router.post("/watch/:id", descView);
-router.post("/watch/auth/:id", verifyToken, descViewAuth);
+router.post("/watch/auth/:id", authenticateToken, descViewAuth);
 router.get("/list/recommend/:id", getVideoRecommend);
-router.get("/user/:userId/history", verifyToken, getWatchedVideos);
+router.get("/user/:userId/history", authenticateToken, getWatchedVideos);
 router.get("/:userId/video-count", getUserVideoCount);
 
 export default router;

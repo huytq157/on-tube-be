@@ -7,12 +7,13 @@ import {
   getComments,
 } from "../controllers/comment.controller";
 import { verifyToken } from "../middleware/verifyToken";
+import { authenticateToken } from "../middleware/authToken";
 const router = express.Router();
 
-router.post("/create", verifyToken, createComment);
-router.delete("/:id", verifyToken, deleteComment);
-router.put("/:id", verifyToken, updateComment);
-router.post("/reply", verifyToken, replyComment);
+router.post("/create", authenticateToken, createComment);
+router.delete("/:id", authenticateToken, deleteComment);
+router.put("/:id", authenticateToken, updateComment);
+router.post("/reply", authenticateToken, replyComment);
 router.get("/:video_id", getComments);
 
 export default router;
