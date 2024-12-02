@@ -21,36 +21,29 @@ import commentRoute from "./routers/comment.routes";
 import subcriptionRoute from "./routers/subcription.routes";
 import notificationRoute from "./routers/notification.routes";
 import likeRoute from "./routers/like.routes";
-import { createProxyMiddleware } from "http-proxy-middleware";
 
 dotenv.config();
 const app = express();
 
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || "*";
 app.use(
   cors({
-    origin: process.env.FRONT_END_CORS,
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        allowedOrigins === "*"
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
-// const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || "*";
-// app.use(
-//   cors({
-//     origin: (origin, callback) => {
-//       if (
-//         !origin ||
-//         allowedOrigins.includes(origin) ||
-//         allowedOrigins === "*"
-//       ) {
-//         callback(null, true);
-//       } else {
-//         callback(new Error("Not allowed by CORS"));
-//       }
-//     },
-//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-//     allowedHeaders: ["Content-Type", "Authorization"],
-//     credentials: true,
-//   })
-// );
 
 const databaseUrl = process.env.DATABASE_URL as string;
 connectDatabase(databaseUrl);
@@ -58,14 +51,20 @@ connectDatabase(databaseUrl);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieParser());
+app.use(passport.initialize());
 app.use(
   session({
-    secret: process.env.SESSION_SECRET!,
+    secret: process.env.SESSION_SECRET as string,
     resave: false,
     saveUninitialized: true,
+    cookie: {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 12 * 60 * 60 * 1000,
+    },
   })
 );
-app.use(passport.initialize());
 app.use(passport.session());
 
 setupSwagger(app);
