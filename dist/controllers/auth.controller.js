@@ -116,8 +116,8 @@ const login = async (req, res) => {
         }, JWT_SECRET, { expiresIn: "12h" });
         res.cookie("token", token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
+            secure: true,
+            sameSite: "none",
             maxAge: 12 * 60 * 60 * 1000,
         });
         const userInfo = {
@@ -202,10 +202,12 @@ exports.googleAuthCallback = [
         const token = jsonwebtoken_1.default.sign({ userId: user._id }, process.env.PASSJWT, { expiresIn: "12h" });
         res.cookie("token", token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
+            secure: true,
+            sameSite: "none",
             maxAge: 12 * 60 * 60 * 1000,
         });
-        const redirectUrl = `http://localhost:3000`;
+        const redirectUrl = process.env.FRONT_END_URL;
+        // const redirectUrl = "https://on-tube.vercel.app/";
         res.redirect(redirectUrl);
     },
 ];

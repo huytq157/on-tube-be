@@ -6,10 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 async function connectDatabase(url) {
     try {
-        await mongoose_1.default.connect(url, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
+        await mongoose_1.default.connect(url, {});
         console.log("⚡️[database]: Kết nối cơ sở dữ liệu thành công!");
     }
     catch (error) {

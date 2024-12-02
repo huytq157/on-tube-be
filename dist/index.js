@@ -27,31 +27,54 @@ const notification_routes_1 = __importDefault(require("./routers/notification.ro
 const like_routes_1 = __importDefault(require("./routers/like.routes"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || "*";
+// const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || "*";
+// app.use(
+//   cors({
+//     origin: (origin, callback) => {
+//       if (
+//         !origin ||
+//         allowedOrigins.includes(origin) ||
+//         allowedOrigins === "*"
+//       ) {
+//         callback(null, true);
+//       } else {
+//         callback(new Error("Not allowed by CORS"));
+//       }
+//     },
+//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+//     allowedHeaders: ["Content-Type", "Authorization"],
+//     credentials: true,
+//   })
+// );
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
-        if (allowedOrigins === "*" || allowedOrigins.includes(origin)) {
-            callback(null, true);
+        // Chấp nhận các origin này
+        const allowedOrigins = [
+            "http://localhost:3000",
+            "https://on-tube.vercel.app",
+        ];
+        if (allowedOrigins.includes(origin) || !origin) {
+            callback(null, true); // Cho phép yêu cầu từ các origin hợp lệ
         }
         else {
-            callback(new Error("Not allowed by CORS"));
+            callback(new Error("Not allowed by CORS")); // Không cho phép origin không hợp lệ
         }
     },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
+    credentials: true, // Cho phép gửi cookie, nếu cần
 }));
 const databaseUrl = process.env.DATABASE_URL;
 (0, database_1.default)(databaseUrl);
 app.use(body_parser_1.default.urlencoded({ extended: false }));
 app.use(body_parser_1.default.json());
 app.use((0, cookie_parser_1.default)());
+app.use(passport_1.default.initialize());
 app.use((0, express_session_1.default)({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
 }));
-app.use(passport_1.default.initialize());
 app.use(passport_1.default.session());
 (0, swagger_1.setupSwagger)(app);
 app.use(express_1.default.static("public"));
