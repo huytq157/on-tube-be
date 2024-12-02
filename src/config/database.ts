@@ -3,8 +3,8 @@ import mongoose, { ConnectOptions } from "mongoose";
 async function connectDatabase(url: string) {
   try {
     await mongoose.connect(url, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
+      // useNewUrlParser: true,
+      // useUnifiedTopology: true,
     } as ConnectOptions);
     console.log("⚡️[database]: Kết nối cơ sở dữ liệu thành công!");
   } catch (error) {

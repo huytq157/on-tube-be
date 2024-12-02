@@ -25,23 +25,44 @@ import likeRoute from "./routers/like.routes";
 dotenv.config();
 const app = express();
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || "*";
+// const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || "*";
+// app.use(
+//   cors({
+//     origin: (origin, callback) => {
+//       if (
+//         !origin ||
+//         allowedOrigins.includes(origin) ||
+//         allowedOrigins === "*"
+//       ) {
+//         callback(null, true);
+//       } else {
+//         callback(new Error("Not allowed by CORS"));
+//       }
+//     },
+//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+//     allowedHeaders: ["Content-Type", "Authorization"],
+//     credentials: true,
+//   })
+// );
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (
-        !origin ||
-        allowedOrigins.includes(origin) ||
-        allowedOrigins === "*"
-      ) {
-        callback(null, true);
+      // Chấp nhận các origin này
+      const allowedOrigins = [
+        "http://localhost:3000",
+        "https://on-tube.vercel.app",
+      ];
+
+      if (allowedOrigins.includes(origin as any) || !origin) {
+        callback(null, true); // Cho phép yêu cầu từ các origin hợp lệ
       } else {
-        callback(new Error("Not allowed by CORS"));
+        callback(new Error("Not allowed by CORS")); // Không cho phép origin không hợp lệ
       }
     },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
+    credentials: true, // Cho phép gửi cookie, nếu cần
   })
 );
 
@@ -57,12 +78,6 @@ app.use(
     secret: process.env.SESSION_SECRET as string,
     resave: false,
     saveUninitialized: true,
-    cookie: {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: 12 * 60 * 60 * 1000,
-    },
   })
 );
 app.use(passport.session());

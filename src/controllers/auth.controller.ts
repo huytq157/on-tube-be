@@ -107,7 +107,6 @@ export const login = async (req: Request, res: Response) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: true,
-      // secure: process.env.NODE_ENV === "production",
       sameSite: "none",
       maxAge: 12 * 60 * 60 * 1000,
     });
@@ -202,11 +201,10 @@ export const googleAuthCallback = [
       httpOnly: true,
       secure: true,
       sameSite: "none",
-      // secure: process.env.NODE_ENV === "production",
       maxAge: 12 * 60 * 60 * 1000,
     });
-    // const redirectUrl = process.env.FRONT_END_URL as string;
-    const redirectUrl = "https://on-tube.vercel.app/";
+    const redirectUrl = process.env.FRONT_END_URL as string;
+    // const redirectUrl = "https://on-tube.vercel.app/";
     res.redirect(redirectUrl);
   },
 ];
