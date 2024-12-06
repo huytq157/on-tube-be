@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import { CommentModel } from "../models/comment.models";
 import mongoose, { Types } from "mongoose";
 import { LikeModel } from "../models/like.models";
+import { NotificationModel } from "../models/notification.models";
 
 interface CustomRequest extends Request {
   userId?: string;

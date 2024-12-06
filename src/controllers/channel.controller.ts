@@ -23,7 +23,7 @@ export const getChannelInfo = async (
 
     return res.json({
       success: true,
-      channel,
+      data: channel,
     });
   } catch (error) {
     console.error(error);
@@ -60,7 +60,7 @@ export const getChannelVideo = async (
 
     return res.json({
       success: true,
-      videos,
+      data: videos,
       totalPage: Math.ceil(total / limit),
       total,
     });

@@ -150,7 +150,7 @@ export const getUser = async (req: CustomRequest, res: Response) => {
     if (userInfo) {
       return res.status(200).json({
         success: true,
-        user: userInfo,
+        data: userInfo,
       });
     } else {
       return res.status(404).json({

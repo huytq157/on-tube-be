@@ -40,14 +40,14 @@ export const getAllVideos = async (
       .limit(limit)
       .skip(skip)
       .populate("writer", "name avatar")
-      .populate("category", "title")
-      .populate("playlist", "title")
+      // .populate("category", "title")
+      // .populate("playlist", "title")
       .sort("-createdAt")
       .lean();
 
     return res.status(200).json({
       success: true,
-      videos,
+      data: videos,
       totalPage: Math.ceil(total / limit),
       currentPage: page,
       total,
@@ -554,7 +554,10 @@ export const getWatchedVideos = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "No watched videos found." });
     }
 
-    res.status(200).json(watchedVideos);
+    res.status(200).json({
+      success: true,
+      data: watchedVideos,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error", error });
@@ -578,6 +581,7 @@ export const getVideobyId = async (
       .populate("writer", "name avatar")
       .populate("tags", "name")
       .lean();
+    console.log("video:", video);
 
     if (!video) {
       return res.status(404).json({
@@ -588,7 +592,7 @@ export const getVideobyId = async (
 
     return res.status(200).json({
       success: true,
-      video,
+      data: video,
     });
   } catch (error) {
     return res.status(500).json({

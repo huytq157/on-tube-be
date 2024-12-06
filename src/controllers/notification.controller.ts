@@ -18,6 +18,7 @@ export const createNotification = async (req: CustomRequest, res: Response) => {
   const { comment, message, video, url, user } =
     req.body as createNotificationFormValue;
   const from_user = req.userId;
+  console.log("from_user: ", from_user);
 
   if (!message || !url) {
     return res

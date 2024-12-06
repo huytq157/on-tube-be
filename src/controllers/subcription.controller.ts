@@ -122,6 +122,16 @@ export const unsubscribeChannel = async (req: CustomRequest, res: Response) => {
 
     console.log("Exitsubcription", exitsubcription);
 
+    await NotificationModel.deleteMany({
+      from_user: userId,
+      user: { $elemMatch: { $eq: channelId } },
+      message: { $regex: "subscribed to your channel" },
+      url: null,
+      read: false,
+      comment: null,
+      video: null,
+    });
+
     return res.json({
       success: true,
       message: "Hủy đăng ký thành công",
