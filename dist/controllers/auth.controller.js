@@ -157,7 +157,7 @@ const getUser = async (req, res) => {
         if (userInfo) {
             return res.status(200).json({
                 success: true,
-                user: userInfo,
+                data: userInfo,
             });
         }
         else {
@@ -179,8 +179,8 @@ exports.getUser = getUser;
 const logout = (req, res) => {
     res.clearCookie("token", {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: true,
+        sameSite: "none",
     });
     return res.status(200).json({
         success: true,

@@ -31,13 +31,13 @@ const getAllVideos = async (req, res) => {
             .limit(limit)
             .skip(skip)
             .populate("writer", "name avatar")
-            .populate("category", "title")
-            .populate("playlist", "title")
+            // .populate("category", "title")
+            // .populate("playlist", "title")
             .sort("-createdAt")
             .lean();
         return res.status(200).json({
             success: true,
-            videos,
+            data: videos,
             totalPage: Math.ceil(total / limit),
             currentPage: page,
             total,
@@ -469,7 +469,10 @@ const getWatchedVideos = async (req, res) => {
         if (!watchedVideos) {
             return res.status(404).json({ message: "No watched videos found." });
         }
-        res.status(200).json(watchedVideos);
+        res.status(200).json({
+            success: true,
+            data: watchedVideos,
+        });
     }
     catch (error) {
         console.error(error);
@@ -490,6 +493,7 @@ const getVideobyId = async (req, res) => {
             .populate("writer", "name avatar")
             .populate("tags", "name")
             .lean();
+        console.log("video:", video);
         if (!video) {
             return res.status(404).json({
                 success: false,
@@ -498,7 +502,7 @@ const getVideobyId = async (req, res) => {
         }
         return res.status(200).json({
             success: true,
-            video,
+            data: video,
         });
     }
     catch (error) {

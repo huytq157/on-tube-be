@@ -54,7 +54,7 @@ const getAllPlayList = async (req, res) => {
         });
         res.status(200).json({
             message: "Success",
-            playlists,
+            data: playlists,
             total,
             totalPages: Math.ceil(total / limit),
             currentPage: page,
@@ -218,7 +218,7 @@ const getPlaylistDetails = async (req, res) => {
         });
         res.status(200).json({
             message: "Playlist details retrieved successfully",
-            playlist: {
+            data: {
                 ...playlist.toObject(),
                 videos: videoDetails,
             },

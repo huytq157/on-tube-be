@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getChannelSubscribersCount = exports.getSubscribedChannelVideos = exports.checkSubscription = exports.unsubscribeChannel = exports.getSubscribedChannels = exports.subscriptionChannel = void 0;
 const subscription_models_1 = require("../models/subscription.models");
+const notification_models_1 = require("../models/notification.models");
 const users_models_1 = require("../models/users.models");
 const video_models_1 = require("../models/video.models");
 const subscriptionChannel = async (req, res) => {
@@ -94,6 +95,15 @@ const unsubscribeChannel = async (req, res) => {
             channelId: channelId,
         });
         console.log("Exitsubcription", exitsubcription);
+        await notification_models_1.NotificationModel.deleteMany({
+            from_user: userId,
+            user: { $elemMatch: { $eq: channelId } },
+            message: { $regex: "subscribed to your channel" },
+            url: null,
+            read: false,
+            comment: null,
+            video: null,
+        });
         return res.json({
             success: true,
             message: "Hủy đăng ký thành công",

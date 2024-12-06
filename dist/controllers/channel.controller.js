@@ -16,7 +16,7 @@ const getChannelInfo = async (req, res) => {
         }
         return res.json({
             success: true,
-            channel,
+            data: channel,
         });
     }
     catch (error) {
@@ -49,7 +49,7 @@ const getChannelVideo = async (req, res) => {
             .sort("-createdAt");
         return res.json({
             success: true,
-            videos,
+            data: videos,
             totalPage: Math.ceil(total / limit),
             total,
         });

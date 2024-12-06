@@ -6,6 +6,7 @@ const subscription_models_1 = require("../models/subscription.models");
 const createNotification = async (req, res) => {
     const { comment, message, video, url, user } = req.body;
     const from_user = req.userId;
+    console.log("from_user: ", from_user);
     if (!message || !url) {
         return res
             .status(400)

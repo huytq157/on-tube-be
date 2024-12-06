@@ -27,25 +27,6 @@ const notification_routes_1 = __importDefault(require("./routers/notification.ro
 const like_routes_1 = __importDefault(require("./routers/like.routes"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
-// const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || "*";
-// app.use(
-//   cors({
-//     origin: (origin, callback) => {
-//       if (
-//         !origin ||
-//         allowedOrigins.includes(origin) ||
-//         allowedOrigins === "*"
-//       ) {
-//         callback(null, true);
-//       } else {
-//         callback(new Error("Not allowed by CORS"));
-//       }
-//     },
-//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-//     allowedHeaders: ["Content-Type", "Authorization"],
-//     credentials: true,
-//   })
-// );
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
         // Chấp nhận các origin này

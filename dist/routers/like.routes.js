@@ -19,5 +19,8 @@ router.get("/video-like", authToken_1.authenticateToken, like_controller_1.getLi
 router.post("/dislike", authToken_1.authenticateToken, like_controller_1.dislikeVideo);
 router.get("/check-like/:id", authToken_1.authenticateToken, like_controller_1.checkIsLiked);
 router.get("/check-dislike/:id", authToken_1.authenticateToken, like_controller_1.checkIsDisliked);
+router.post("/like-comment", authToken_1.authenticateToken, like_controller_1.likeComment);
+router.post("/dislike-comment", authToken_1.authenticateToken, like_controller_1.disLikeComment);
+router.post("/check-like-comment", authToken_1.authenticateToken, like_controller_1.checkIsLikedComment);
 router.use(limiter);
 exports.default = router;
