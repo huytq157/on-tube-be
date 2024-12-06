@@ -61,6 +61,48 @@ export const getAllVideos = async (
   }
 };
 
+export const getVideos = async (req: Request, res: Response) => {
+  try {
+    const { page = 1, limit = 5, lastCreatedAt } = req.query;
+
+    const perPage = parseInt(limit as string) || 5;
+    const currentPage = parseInt(page as string) || 1;
+
+    let query = {};
+    if (lastCreatedAt) {
+      query = { createdAt: { $lt: lastCreatedAt } };
+    }
+
+    const videos = await VideoModel.find(query)
+      .select(
+        "title videoThumbnail videoUrl isPublic publishedDate totalView  createdAt"
+      )
+      .populate("writer", "name avatar")
+      .sort({ createdAt: -1 })
+      .limit(perPage);
+
+    const totalCount = await VideoModel.countDocuments({});
+    const totalPages = Math.ceil(totalCount / perPage);
+
+    const headers = {
+      "x-page": currentPage,
+      "x-total-count": totalCount,
+      "x-pages-count": totalPages,
+      "x-per-page": perPage,
+      "x-next-page": currentPage < totalPages ? currentPage + 1 : null,
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: videos,
+      headers,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
 export const addVideo = async (req: CustomRequest, res: Response) => {
   if (!req.body.videoUrl.includes("")) {
     return res.status(400).json({

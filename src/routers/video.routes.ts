@@ -3,6 +3,7 @@ const router = express.Router();
 
 import {
   getAllVideos,
+  getVideos,
   searchVideo,
   getTrendingVideos,
   deleteVideo,
@@ -23,6 +24,7 @@ import {
 import { authenticateToken } from "../middleware/authToken";
 
 router.get("/list", getAllVideos);
+router.get("/all", getVideos);
 router.get("/search", searchVideo);
 router.get("/trending", getTrendingVideos);
 router.delete("/:id", authenticateToken, deleteVideo);
