@@ -49,6 +49,7 @@ export const getChannelVideo = async (
       writer: channelId,
       isPublic: isPublic,
     });
+
     const videos = await VideoModel.find({
       writer: channelId,
       isPublic: isPublic,

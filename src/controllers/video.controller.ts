@@ -28,7 +28,7 @@ export const getAllVideos = async (
         filter.category = category;
       }
     }
-
+ 
     if (req.query.isPublic) {
       filter.isPublic = isPublic;
     }
@@ -40,7 +40,7 @@ export const getAllVideos = async (
     const total = await VideoModel.countDocuments(filter);
     const videos = await VideoModel.find(filter)
       .select(
-        "title videoThumbnail videoUrl isPublic publishedDate totalView  createdAt"
+        "title videoThumbnail videoUrl isPublic publishedDate totalView videoType createdAt"
       )
       .limit(limit)
       .skip(skip)
