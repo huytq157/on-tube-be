@@ -53,6 +53,9 @@ export const getChannelVideo = async (
       writer: channelId,
       isPublic: isPublic,
     })
+      .select(
+        "title videoThumbnail videoUrl isPublic publishedDate totalView createdAt videoType likeCount dislikeCount allowComments"
+      )
       .skip(skip)
       .limit(limit)
       .populate("writer")

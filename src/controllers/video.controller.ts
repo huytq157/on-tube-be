@@ -19,6 +19,7 @@ export const getAllVideos = async (
 
     const category = req.query.category as string;
     const isPublic = req.query.isPublic === "true";
+    const videoType = req.query.videoType as string;
 
     const filter: any = {};
 
@@ -32,6 +33,10 @@ export const getAllVideos = async (
       filter.isPublic = isPublic;
     }
 
+    if (videoType && ["short", "long"].includes(videoType)) {
+      filter.videoType = videoType;
+    }
+
     const total = await VideoModel.countDocuments(filter);
     const videos = await VideoModel.find(filter)
       .select(
@@ -40,8 +45,6 @@ export const getAllVideos = async (
       .limit(limit)
       .skip(skip)
       .populate("writer", "name avatar")
-      // .populate("category", "title")
-      // .populate("playlist", "title")
       .sort("-createdAt")
       .lean();
 
@@ -123,9 +126,10 @@ export const addVideo = async (req: CustomRequest, res: Response) => {
       tags,
       videoThumbnail,
       publishedDate,
+      videoType,
     } = req.body;
 
-    if (!title || !description || !videoUrl || !publishedDate) {
+    if (!title || !description || !videoUrl || !publishedDate || !videoType) {
       return res.status(400).json({
         success: false,
         message: "All required fields must be provided!",
@@ -186,6 +190,7 @@ export const addVideo = async (req: CustomRequest, res: Response) => {
       videoThumbnail,
       publishedDate,
       writer,
+      videoType,
     });
 
     await newVideo.save();
@@ -228,6 +233,7 @@ export const updateVideo = async (req: CustomRequest, res: Response) => {
       tags,
       videoThumbnail,
       publishedDate,
+      videoType,
     } = req.body;
 
     // Kiểm tra video có tồn tại và thuộc về người dùng hiện tại hay không
@@ -298,6 +304,7 @@ export const updateVideo = async (req: CustomRequest, res: Response) => {
         tags: tags || video.tags,
         videoThumbnail: videoThumbnail || video.videoThumbnail,
         publishedDate: publishedDate || video.publishedDate,
+        videoType: videoType || video.videoType,
       },
       { new: true }
     );
