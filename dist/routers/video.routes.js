@@ -9,6 +9,7 @@ const video_controller_1 = require("../controllers/video.controller");
 const favourite_controller_1 = require("../controllers/favourite.controller");
 const authToken_1 = require("../middleware/authToken");
 router.get("/list", video_controller_1.getAllVideos);
+router.get("/all", video_controller_1.getVideos);
 router.get("/search", video_controller_1.searchVideo);
 router.get("/trending", video_controller_1.getTrendingVideos);
 router.delete("/:id", authToken_1.authenticateToken, video_controller_1.deleteVideo);

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUserVideoCount = exports.getVideoRecommend = exports.getVideobyId = exports.getWatchedVideos = exports.descViewAuth = exports.descView = exports.deleteVideo = exports.getTrendingVideos = exports.searchVideo = exports.updateVideo = exports.addVideo = exports.getAllVideos = void 0;
+exports.getUserVideoCount = exports.getVideoRecommend = exports.getVideobyId = exports.getWatchedVideos = exports.descViewAuth = exports.descView = exports.deleteVideo = exports.getTrendingVideos = exports.searchVideo = exports.updateVideo = exports.addVideo = exports.getVideos = exports.getAllVideos = void 0;
 const video_models_1 = require("../models/video.models");
 const category_models_1 = require("../models/category.models");
 const playlist_models_1 = require("../models/playlist.models");
@@ -16,6 +16,7 @@ const getAllVideos = async (req, res) => {
         const skip = (page - 1) * limit;
         const category = req.query.category;
         const isPublic = req.query.isPublic === "true";
+        const videoType = req.query.videoType;
         const filter = {};
         if (category) {
             if (mongoose_1.default.Types.ObjectId.isValid(category)) {
@@ -25,14 +26,15 @@ const getAllVideos = async (req, res) => {
         if (req.query.isPublic) {
             filter.isPublic = isPublic;
         }
+        if (videoType && ["short", "long"].includes(videoType)) {
+            filter.videoType = videoType;
+        }
         const total = await video_models_1.VideoModel.countDocuments(filter);
         const videos = await video_models_1.VideoModel.find(filter)
-            .select("title videoThumbnail videoUrl isPublic publishedDate totalView  createdAt")
+            .select("title videoThumbnail videoUrl isPublic publishedDate totalView videoType createdAt")
             .limit(limit)
             .skip(skip)
             .populate("writer", "name avatar")
-            // .populate("category", "title")
-            // .populate("playlist", "title")
             .sort("-createdAt")
             .lean();
         return res.status(200).json({
@@ -52,6 +54,41 @@ const getAllVideos = async (req, res) => {
     }
 };
 exports.getAllVideos = getAllVideos;
+const getVideos = async (req, res) => {
+    try {
+        const { page = 1, limit = 5, lastCreatedAt } = req.query;
+        const perPage = parseInt(limit) || 5;
+        const currentPage = parseInt(page) || 1;
+        let query = {};
+        if (lastCreatedAt) {
+            query = { createdAt: { $lt: lastCreatedAt } };
+        }
+        const videos = await video_models_1.VideoModel.find(query)
+            .select("title videoThumbnail videoUrl isPublic publishedDate totalView  createdAt")
+            .populate("writer", "name avatar")
+            .sort({ createdAt: -1 })
+            .limit(perPage);
+        const totalCount = await video_models_1.VideoModel.countDocuments({});
+        const totalPages = Math.ceil(totalCount / perPage);
+        const headers = {
+            "x-page": currentPage,
+            "x-total-count": totalCount,
+            "x-pages-count": totalPages,
+            "x-per-page": perPage,
+            "x-next-page": currentPage < totalPages ? currentPage + 1 : null,
+        };
+        return res.status(200).json({
+            success: true,
+            data: videos,
+            headers,
+        });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+exports.getVideos = getVideos;
 const addVideo = async (req, res) => {
     if (!req.body.videoUrl.includes("")) {
         return res.status(400).json({
@@ -60,8 +97,8 @@ const addVideo = async (req, res) => {
         });
     }
     try {
-        const { title, description, videoUrl, isPublic, allowComments, category, playlist, tags, videoThumbnail, publishedDate, } = req.body;
-        if (!title || !description || !videoUrl || !publishedDate) {
+        const { title, description, videoUrl, isPublic, allowComments, category, playlist, tags, videoThumbnail, publishedDate, videoType, } = req.body;
+        if (!title || !description || !videoUrl || !publishedDate || !videoType) {
             return res.status(400).json({
                 success: false,
                 message: "All required fields must be provided!",
@@ -116,6 +153,7 @@ const addVideo = async (req, res) => {
             videoThumbnail,
             publishedDate,
             writer,
+            videoType,
         });
         await newVideo.save();
         if (validPlaylist) {
@@ -140,7 +178,7 @@ const updateVideo = async (req, res) => {
     const videoId = req.params.id;
     const userId = req.userId;
     try {
-        const { title, description, videoUrl, isPublic, allowComments, category, playlist, tags, videoThumbnail, publishedDate, } = req.body;
+        const { title, description, videoUrl, isPublic, allowComments, category, playlist, tags, videoThumbnail, publishedDate, videoType, } = req.body;
         // Kiểm tra video có tồn tại và thuộc về người dùng hiện tại hay không
         const video = await video_models_1.VideoModel.findById(videoId);
         if (!video) {
@@ -204,6 +242,7 @@ const updateVideo = async (req, res) => {
             tags: tags || video.tags,
             videoThumbnail: videoThumbnail || video.videoThumbnail,
             publishedDate: publishedDate || video.publishedDate,
+            videoType: videoType || video.videoType,
         }, { new: true });
         // Nếu playlist có thay đổi, cập nhật playlist
         if (video.playlist !== validPlaylist) {
