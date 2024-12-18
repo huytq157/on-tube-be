@@ -197,6 +197,7 @@ export const getLikedVideos = async (req: CustomRequest, res: Response) => {
   }
 
   try {
+    const { videoType } = req.query;
     const likedVideos = await LikeModel.find({ user: userId, type: "like" })
       .populate({
         path: "video",
@@ -208,7 +209,11 @@ export const getLikedVideos = async (req: CustomRequest, res: Response) => {
       .exec();
 
     const videos = likedVideos
-      .filter((like) => like.video)
+      .filter(
+        (like) =>
+          like.video &&
+          (!videoType || (like.video as any).videoType === videoType)
+      )
       .map((like) => like.video);
 
     return res.status(200).json({

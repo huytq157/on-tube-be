@@ -304,18 +304,23 @@ exports.searchVideo = searchVideo;
 const getTrendingVideos = async (req, res) => {
     const limit = parseInt(req.query.limit) || 12;
     const page = parseInt(req.query.page) || 1;
+    const videoType = req.query.videoType;
     const skip = (page - 1) * limit;
     try {
+        const matchConditions = { isPublic: true };
+        if (videoType) {
+            matchConditions.videoType = videoType;
+        }
         const trendingVideos = await video_models_1.VideoModel.aggregate([
             {
-                $match: { isPublic: true },
+                $match: matchConditions,
             },
             {
                 $addFields: {
                     trendScore: {
                         $add: [
                             { $multiply: ["$totalView", 1] },
-                            { $multiply: ["$likesCount", 2] },
+                            { $multiply: ["$likeCount", 2] },
                             {
                                 $cond: [
                                     {

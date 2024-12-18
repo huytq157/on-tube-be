@@ -159,6 +159,7 @@ exports.checkSubscription = checkSubscription;
 const getSubscribedChannelVideos = async (req, res) => {
     try {
         const userId = req.userId;
+        const { videoType } = req.query;
         const subscriptions = await subscription_models_1.SubscriptionModel.find({ userId }).select("channelId");
         if (subscriptions.length === 0) {
             return res.status(404).json({
@@ -167,10 +168,14 @@ const getSubscribedChannelVideos = async (req, res) => {
             });
         }
         const subscribedChannelIds = subscriptions?.map((sub) => sub?.channelId);
-        const videos = await video_models_1.VideoModel.find({
+        const filter = {
             writer: { $in: subscribedChannelIds },
             isPublic: true,
-        })
+        };
+        if (videoType) {
+            filter.videoType = videoType;
+        }
+        const videos = await video_models_1.VideoModel.find(filter)
             .select("title videoUrl videoThumbnail createdAt totalView writer")
             .populate("writer", "name avatar")
             .sort({ createdAt: -1 });

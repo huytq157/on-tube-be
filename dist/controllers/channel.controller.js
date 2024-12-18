@@ -34,15 +34,17 @@ const getChannelVideo = async (req, res) => {
     const limit = parseInt(req.query.limit, 10) || 12;
     const skip = (page - 1) * limit;
     const isPublic = req.query.isPublic === "true";
+    const videoType = req.query.videoType;
     try {
-        const total = await video_models_1.VideoModel.countDocuments({
+        const filter = {
             writer: channelId,
             isPublic: isPublic,
-        });
-        const videos = await video_models_1.VideoModel.find({
-            writer: channelId,
-            isPublic: isPublic,
-        })
+        };
+        if (videoType) {
+            filter.videoType = videoType;
+        }
+        const total = await video_models_1.VideoModel.countDocuments(filter);
+        const videos = await video_models_1.VideoModel.find(filter)
             .select("title videoThumbnail videoUrl isPublic publishedDate totalView createdAt videoType likeCount dislikeCount allowComments")
             .skip(skip)
             .limit(limit)

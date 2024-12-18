@@ -28,7 +28,7 @@ export const getAllVideos = async (
         filter.category = category;
       }
     }
- 
+
     if (req.query.isPublic) {
       filter.isPublic = isPublic;
     }
@@ -380,19 +380,26 @@ export const searchVideo = async (req: Request, res: Response) => {
 export const getTrendingVideos = async (req: Request, res: Response) => {
   const limit = parseInt(req.query.limit as string) || 12;
   const page = parseInt(req.query.page as string) || 1;
+  const videoType = req.query.videoType as string;
   const skip = (page - 1) * limit;
 
   try {
+    const matchConditions: any = { isPublic: true };
+
+    if (videoType) {
+      matchConditions.videoType = videoType;
+    }
+
     const trendingVideos = await VideoModel.aggregate([
       {
-        $match: { isPublic: true },
+        $match: matchConditions,
       },
       {
         $addFields: {
           trendScore: {
             $add: [
               { $multiply: ["$totalView", 1] },
-              { $multiply: ["$likesCount", 2] },
+              { $multiply: ["$likeCount", 2] },
               {
                 $cond: [
                   {

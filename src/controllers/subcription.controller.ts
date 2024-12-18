@@ -190,6 +190,7 @@ export const getSubscribedChannelVideos = async (
 ) => {
   try {
     const userId = req.userId;
+    const { videoType } = req.query;
 
     const subscriptions = await SubscriptionModel.find({ userId }).select(
       "channelId"
@@ -204,10 +205,16 @@ export const getSubscribedChannelVideos = async (
 
     const subscribedChannelIds = subscriptions?.map((sub) => sub?.channelId);
 
-    const videos = await VideoModel.find({
+    const filter: Record<string, any> = {
       writer: { $in: subscribedChannelIds },
       isPublic: true,
-    })
+    };
+
+    if (videoType) {
+      filter.videoType = videoType;
+    }
+
+    const videos = await VideoModel.find(filter)
       .select("title videoUrl videoThumbnail createdAt totalView writer")
       .populate("writer", "name avatar")
       .sort({ createdAt: -1 });
