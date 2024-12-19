@@ -575,6 +575,7 @@ const getVideoRecommend = async (req, res) => {
         }
         let recommendedVideos = await video_models_1.VideoModel.find({
             _id: { $ne: id },
+            videoType: { $ne: "short" },
             $or: [
                 { category: currentVideo.category },
                 { tags: { $in: currentVideo.tags } },
@@ -589,6 +590,7 @@ const getVideoRecommend = async (req, res) => {
         if (recommendedVideos.length === 0) {
             recommendedVideos = await video_models_1.VideoModel.find({
                 _id: { $ne: id },
+                videoType: { $ne: "short" },
                 isPublic: true,
             })
                 .sort({ totalView: -1, publishedDate: -1 })

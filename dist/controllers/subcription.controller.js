@@ -94,7 +94,6 @@ const unsubscribeChannel = async (req, res) => {
             userId: userId,
             channelId: channelId,
         });
-        console.log("Exitsubcription", exitsubcription);
         await notification_models_1.NotificationModel.deleteMany({
             from_user: userId,
             user: { $elemMatch: { $eq: channelId } },
