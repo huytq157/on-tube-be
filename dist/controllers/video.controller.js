@@ -494,23 +494,53 @@ const descViewAuth = async (req, res) => {
 exports.descViewAuth = descViewAuth;
 const getWatchedVideos = async (req, res) => {
     const userId = req.params.userId;
+    const { videoType } = req.query;
     try {
         const twoWeeksAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
         await watchvideo_models_1.WatchedVideoModel.deleteMany({
             user: userId,
             watchedAt: { $lt: twoWeeksAgo },
         });
-        const watchedVideos = await watchvideo_models_1.WatchedVideoModel.find({ user: userId })
-            .populate({
-            path: "video",
-            select: "videoUrl createdAt videoThumbnail isPublic title",
-            populate: {
-                path: "writer",
-                select: "avatar name",
+        const watchedVideos = await watchvideo_models_1.WatchedVideoModel.aggregate([
+            {
+                $match: { user: new mongoose_1.default.Types.ObjectId(userId) },
             },
-        })
-            .exec();
-        if (!watchedVideos) {
+            {
+                $lookup: {
+                    from: "videos",
+                    localField: "video",
+                    foreignField: "_id",
+                    as: "video",
+                },
+            },
+            { $unwind: "$video" },
+            {
+                $match: videoType ? { "video.videoType": videoType } : {},
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "video.writer",
+                    foreignField: "_id",
+                    as: "video.writer",
+                },
+            },
+            { $unwind: "$video.writer" },
+            {
+                $project: {
+                    _id: 1,
+                    "video.videoUrl": 1,
+                    "video.createdAt": 1,
+                    "video.videoThumbnail": 1,
+                    "video.isPublic": 1,
+                    "video.title": 1,
+                    "video.videoType": 1,
+                    "video.writer.name": 1,
+                    "video.writer.avatar": 1,
+                },
+            },
+        ]);
+        if (!watchedVideos.length) {
             return res.status(404).json({ message: "No watched videos found." });
         }
         res.status(200).json({

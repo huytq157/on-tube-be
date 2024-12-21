@@ -587,6 +587,7 @@ export const descViewAuth = async (req: CustomRequest, res: Response) => {
 
 export const getWatchedVideos = async (req: Request, res: Response) => {
   const userId = req.params.userId;
+  const { videoType } = req.query;
 
   try {
     const twoWeeksAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
@@ -595,18 +596,47 @@ export const getWatchedVideos = async (req: Request, res: Response) => {
       watchedAt: { $lt: twoWeeksAgo },
     });
 
-    const watchedVideos = await WatchedVideoModel.find({ user: userId })
-      .populate({
-        path: "video",
-        select: "videoUrl createdAt videoThumbnail isPublic title",
-        populate: {
-          path: "writer",
-          select: "avatar name",
+    const watchedVideos = await WatchedVideoModel.aggregate([
+      {
+        $match: { user: new mongoose.Types.ObjectId(userId) },
+      },
+      {
+        $lookup: {
+          from: "videos",
+          localField: "video",
+          foreignField: "_id",
+          as: "video",
         },
-      })
-      .exec();
+      },
+      { $unwind: "$video" },
+      {
+        $match: videoType ? { "video.videoType": videoType } : {},
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "video.writer",
+          foreignField: "_id",
+          as: "video.writer",
+        },
+      },
+      { $unwind: "$video.writer" },
+      {
+        $project: {
+          _id: 1,
+          "video.videoUrl": 1,
+          "video.createdAt": 1,
+          "video.videoThumbnail": 1,
+          "video.isPublic": 1,
+          "video.title": 1,
+          "video.videoType": 1,
+          "video.writer.name": 1,
+          "video.writer.avatar": 1,
+        },
+      },
+    ]);
 
-    if (!watchedVideos) {
+    if (!watchedVideos.length) {
       return res.status(404).json({ message: "No watched videos found." });
     }
 
