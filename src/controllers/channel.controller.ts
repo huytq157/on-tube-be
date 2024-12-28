@@ -44,6 +44,8 @@ export const getChannelVideo = async (
   const skip = (page - 1) * limit;
   const isPublic = req.query.isPublic === "true";
   const videoType = req.query.videoType as string;
+  const sortBy = req.query.sortBy as string;
+  // const sortByPopularity = req.query.sortByPopularity as string;
 
   try {
     const filter: any = {
@@ -56,6 +58,20 @@ export const getChannelVideo = async (
     }
 
     const total = await VideoModel.countDocuments(filter);
+    let sortOptions: any = { createdAt: -1 };
+    if (sortBy === "oldest") {
+      sortOptions = { createdAt: 1 };
+    }
+
+    // if (sortByPopularity === "popular") {
+    //   sortOptions = {
+    //     $cond: {
+    //       if: { $gt: ["$totalView", 1] },
+    //       then: { totalView: -1 },
+    //       else: { likeCount: -1 },
+    //     },
+    //   };
+    // }
 
     const videos = await VideoModel.find(filter)
       .select(
@@ -64,7 +80,8 @@ export const getChannelVideo = async (
       .skip(skip)
       .limit(limit)
       .populate("writer")
-      .sort("-createdAt");
+      .sort("-createdAt")
+      .sort(sortOptions);
 
     return res.json({
       success: true,

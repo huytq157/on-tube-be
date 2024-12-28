@@ -528,15 +528,7 @@ const getWatchedVideos = async (req, res) => {
             { $unwind: "$video.writer" },
             {
                 $project: {
-                    _id: 1,
-                    "video.videoUrl": 1,
-                    "video.createdAt": 1,
-                    "video.videoThumbnail": 1,
-                    "video.isPublic": 1,
-                    "video.title": 1,
-                    "video.videoType": 1,
-                    "video.writer.name": 1,
-                    "video.writer.avatar": 1,
+                    video: 1,
                 },
             },
         ]);
@@ -567,7 +559,6 @@ const getVideobyId = async (req, res) => {
             .populate("writer", "name avatar")
             .populate("tags", "name")
             .lean();
-        console.log("video:", video);
         if (!video) {
             return res.status(404).json({
                 success: false,

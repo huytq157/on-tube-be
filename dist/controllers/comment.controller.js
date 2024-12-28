@@ -171,12 +171,23 @@ const getNestedReplies = async (parentId) => {
 const getComments = async (req, res) => {
     const video_id = req.params.video_id;
     const userId = req.userId;
+    const sortBy = req.query.sortBy || "newest";
     if (!video_id) {
         return res
             .status(400)
             .json({ success: false, message: "Missing parameter videoId" });
     }
     try {
+        let sortCriteria = {};
+        if (sortBy === "oldest") {
+            sortCriteria = { createdAt: 1 };
+        }
+        else if (sortBy === "newest") {
+            sortCriteria = { createdAt: -1 };
+        }
+        else if (sortBy === "mostLiked") {
+            sortCriteria = { likeCount: -1 };
+        }
         const comments = await comment_models_1.CommentModel.aggregate([
             {
                 $match: {
@@ -204,8 +215,10 @@ const getComments = async (req, res) => {
                     },
                     createdAt: 1,
                     updatedAt: 1,
+                    likeCount: 1,
                 },
             },
+            { $sort: sortCriteria },
         ]);
         const commentsWithReplies = await Promise.all(comments.map(async (comment) => {
             const replies = await getNestedReplies(comment._id);

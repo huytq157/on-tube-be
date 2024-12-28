@@ -234,6 +234,7 @@ export const getComments = async (
 ): Promise<Response> => {
   const video_id = req.params.video_id;
   const userId = req.userId;
+  const sortBy = req.query.sortBy || "newest";
 
   if (!video_id) {
     return res
@@ -242,6 +243,15 @@ export const getComments = async (
   }
 
   try {
+    let sortCriteria = {};
+    if (sortBy === "oldest") {
+      sortCriteria = { createdAt: 1 };
+    } else if (sortBy === "newest") {
+      sortCriteria = { createdAt: -1 };
+    } else if (sortBy === "mostLiked") {
+      sortCriteria = { likeCount: -1 };
+    }
+
     const comments = await CommentModel.aggregate([
       {
         $match: {
@@ -269,8 +279,10 @@ export const getComments = async (
           },
           createdAt: 1,
           updatedAt: 1,
+          likeCount: 1,
         },
       },
+      { $sort: sortCriteria },
     ]);
 
     const commentsWithReplies: Comment[] = await Promise.all(
