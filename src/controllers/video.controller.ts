@@ -64,41 +64,53 @@ export const getAllVideos = async (
   }
 };
 
-export const getVideos = async (req: Request, res: Response) => {
+export const getVideos = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { page = 1, limit = 5, lastCreatedAt } = req.query;
+    const { page = 1, limit = 5, category, videoType, isPublic } = req.query;
+    const perPage = parseInt(limit as any) || 5;
+    const currentPage = parseInt(page as any) || 1;
 
-    const perPage = parseInt(limit as string) || 5;
-    const currentPage = parseInt(page as string) || 1;
+    let query: any = {};
 
-    let query = {};
-    if (lastCreatedAt) {
-      query = { createdAt: { $lt: lastCreatedAt } };
+    if (category && category !== "null") {
+      query.category = category;
     }
+
+    if (videoType) {
+      query.videoType = videoType;
+    }
+    if (isPublic !== undefined) {
+      query.isPublic = isPublic === "true";
+    }
+
+    const skip = (currentPage - 1) * perPage;
 
     const videos = await VideoModel.find(query)
       .select(
-        "title videoThumbnail videoUrl isPublic publishedDate totalView  createdAt"
+        "title videoThumbnail videoUrl isPublic publishedDate totalView createdAt"
       )
       .populate("writer", "name avatar")
       .sort({ createdAt: -1 })
+      .skip(skip)
       .limit(perPage);
 
-    const totalCount = await VideoModel.countDocuments({});
+    const totalCount = await VideoModel.countDocuments(query);
     const totalPages = Math.ceil(totalCount / perPage);
+    const hasMore = currentPage < totalPages;
 
     const headers = {
       "x-page": currentPage,
       "x-total-count": totalCount,
       "x-pages-count": totalPages,
       "x-per-page": perPage,
-      "x-next-page": currentPage < totalPages ? currentPage + 1 : null,
+      "x-next-page": hasMore ? currentPage + 1 : null,
     };
 
     return res.status(200).json({
       success: true,
       data: videos,
       headers,
+      hasMore,
     });
   } catch (error) {
     console.error(error);
