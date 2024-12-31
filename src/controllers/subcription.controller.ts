@@ -186,9 +186,12 @@ export const getSubscribedChannelVideos = async (
   req: CustomRequest,
   res: Response
 ) => {
+  const { videoType, page = 1, limit = 10 } = req.query;
+  const perPage = parseInt(limit as any) || 10;
+  const currentPage = parseInt(page as any) || 1;
+
   try {
     const userId = req.userId;
-    const { videoType } = req.query;
 
     const subscriptions = await SubscriptionModel.find({ userId }).select(
       "channelId"
@@ -201,7 +204,7 @@ export const getSubscribedChannelVideos = async (
       });
     }
 
-    const subscribedChannelIds = subscriptions?.map((sub) => sub?.channelId);
+    const subscribedChannelIds = subscriptions.map((sub) => sub.channelId);
 
     const filter: Record<string, any> = {
       writer: { $in: subscribedChannelIds },
@@ -212,14 +215,34 @@ export const getSubscribedChannelVideos = async (
       filter.videoType = videoType;
     }
 
+    // Calculate skip value for pagination
+    const skip = (currentPage - 1) * perPage;
+
     const videos = await VideoModel.find(filter)
       .select("title videoUrl videoThumbnail createdAt totalView writer")
       .populate("writer", "name avatar")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(perPage)
+      .lean();
 
-    return res.json({
+    const totalCount = await VideoModel.countDocuments(filter);
+    const totalPages = Math.ceil(totalCount / perPage);
+    const hasMore = currentPage < totalPages;
+
+    const headers = {
+      "x-page": currentPage,
+      "x-total-count": totalCount,
+      "x-pages-count": totalPages,
+      "x-per-page": perPage,
+      "x-next-page": hasMore ? currentPage + 1 : null,
+    };
+
+    return res.status(200).json({
       success: true,
       data: videos,
+      headers,
+      hasMore,
     });
   } catch (error) {
     console.error(error);

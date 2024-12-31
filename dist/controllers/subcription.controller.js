@@ -156,9 +156,11 @@ const checkSubscription = async (req, res) => {
 };
 exports.checkSubscription = checkSubscription;
 const getSubscribedChannelVideos = async (req, res) => {
+    const { videoType, page = 1, limit = 10 } = req.query;
+    const perPage = parseInt(limit) || 10;
+    const currentPage = parseInt(page) || 1;
     try {
         const userId = req.userId;
-        const { videoType } = req.query;
         const subscriptions = await subscription_models_1.SubscriptionModel.find({ userId }).select("channelId");
         if (subscriptions.length === 0) {
             return res.status(404).json({
@@ -166,7 +168,7 @@ const getSubscribedChannelVideos = async (req, res) => {
                 message: "Chưa đăng ký bất kỳ kênh nào.",
             });
         }
-        const subscribedChannelIds = subscriptions?.map((sub) => sub?.channelId);
+        const subscribedChannelIds = subscriptions.map((sub) => sub.channelId);
         const filter = {
             writer: { $in: subscribedChannelIds },
             isPublic: true,
@@ -174,13 +176,30 @@ const getSubscribedChannelVideos = async (req, res) => {
         if (videoType) {
             filter.videoType = videoType;
         }
+        // Calculate skip value for pagination
+        const skip = (currentPage - 1) * perPage;
         const videos = await video_models_1.VideoModel.find(filter)
             .select("title videoUrl videoThumbnail createdAt totalView writer")
             .populate("writer", "name avatar")
-            .sort({ createdAt: -1 });
-        return res.json({
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(perPage)
+            .lean();
+        const totalCount = await video_models_1.VideoModel.countDocuments(filter);
+        const totalPages = Math.ceil(totalCount / perPage);
+        const hasMore = currentPage < totalPages;
+        const headers = {
+            "x-page": currentPage,
+            "x-total-count": totalCount,
+            "x-pages-count": totalPages,
+            "x-per-page": perPage,
+            "x-next-page": hasMore ? currentPage + 1 : null,
+        };
+        return res.status(200).json({
             success: true,
             data: videos,
+            headers,
+            hasMore,
         });
     }
     catch (error) {

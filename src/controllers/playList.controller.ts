@@ -36,9 +36,11 @@ export const addPlayList = async (req: CustomRequest, res: Response) => {
 
 export const getAllPlayList = async (req: CustomRequest, res: Response) => {
   const userId = req.userId;
-  const page = parseInt(req.query.page as string, 10) || 1;
-  const limit = parseInt(req.query.limit as string, 10) || 10;
-  const skip = (page - 1) * limit;
+  const { page = 1, limit = 10 } = req.query;
+  const perPage = parseInt(limit as string, 10) || 10;
+  const currentPage = parseInt(page as string, 10) || 1;
+  const skip = (currentPage - 1) * perPage;
+
   try {
     const playlists = await PlaylistModel.find({ writer: userId })
       .populate("writer", "name avatar")
@@ -54,21 +56,34 @@ export const getAllPlayList = async (req: CustomRequest, res: Response) => {
         },
       })
       .skip(skip)
-      .limit(limit);
-    const total = await PlaylistModel.countDocuments({
-      writer: userId,
-    });
+      .limit(perPage)
+      .lean();
 
-    res.status(200).json({
+    const totalCount = await PlaylistModel.countDocuments({ writer: userId });
+    const totalPages = Math.ceil(totalCount / perPage);
+    const hasMore = currentPage < totalPages;
+
+    const headers = {
+      "x-page": currentPage,
+      "x-total-count": totalCount,
+      "x-pages-count": totalPages,
+      "x-per-page": perPage,
+      "x-next-page": hasMore ? currentPage + 1 : null,
+    };
+
+    return res.status(200).json({
+      success: true,
       message: "Success",
       data: playlists,
-      total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
+      headers,
+      hasMore,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Server error. Please try again later.",
+    });
   }
 };
 

@@ -36,7 +36,6 @@ const getChannelVideo = async (req, res) => {
     const isPublic = req.query.isPublic === "true";
     const videoType = req.query.videoType;
     const sortBy = req.query.sortBy;
-    // const sortByPopularity = req.query.sortByPopularity as string;
     try {
         const filter = {
             writer: channelId,
@@ -45,32 +44,31 @@ const getChannelVideo = async (req, res) => {
         if (videoType) {
             filter.videoType = videoType;
         }
-        const total = await video_models_1.VideoModel.countDocuments(filter);
+        const totalCount = await video_models_1.VideoModel.countDocuments(filter);
+        const totalPages = Math.ceil(totalCount / limit);
+        const hasMore = page < totalPages;
         let sortOptions = { createdAt: -1 };
         if (sortBy === "oldest") {
             sortOptions = { createdAt: 1 };
         }
-        // if (sortByPopularity === "popular") {
-        //   sortOptions = {
-        //     $cond: {
-        //       if: { $gt: ["$totalView", 1] },
-        //       then: { totalView: -1 },
-        //       else: { likeCount: -1 },
-        //     },
-        //   };
-        // }
         const videos = await video_models_1.VideoModel.find(filter)
             .select("title videoThumbnail videoUrl isPublic publishedDate totalView createdAt videoType likeCount dislikeCount allowComments")
             .skip(skip)
             .limit(limit)
             .populate("writer")
-            .sort("-createdAt")
             .sort(sortOptions);
-        return res.json({
+        const headers = {
+            "x-page": page,
+            "x-total-count": totalCount,
+            "x-pages-count": totalPages,
+            "x-per-page": limit,
+            "x-next-page": hasMore ? page + 1 : null,
+        };
+        return res.status(200).json({
             success: true,
             data: videos,
-            totalPage: Math.ceil(total / limit),
-            total,
+            headers,
+            hasMore,
         });
     }
     catch (error) {
@@ -84,21 +82,22 @@ const getChannelVideo = async (req, res) => {
 exports.getChannelVideo = getChannelVideo;
 const getChannelPlaylist = async (req, res) => {
     const channelId = req.params.id;
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 12;
-    const skip = (page - 1) * limit;
-    const isPublic = req.query.isPublic === "true";
+    const { page = 1, limit = 12, isPublic = "true" } = req.query;
+    const perPage = parseInt(limit, 10) || 12;
+    const currentPage = parseInt(page, 10) || 1;
+    const skip = (currentPage - 1) * perPage;
+    const publicFlag = isPublic === "true";
     try {
-        const total = await playlist_models_1.PlaylistModel.countDocuments({
+        const totalCount = await playlist_models_1.PlaylistModel.countDocuments({
             writer: channelId,
-            isPublic: isPublic,
+            isPublic: publicFlag,
         });
         const playlists = await playlist_models_1.PlaylistModel.find({
             writer: channelId,
-            isPublic: isPublic,
+            isPublic: publicFlag,
         })
             .skip(skip)
-            .limit(limit)
+            .limit(perPage)
             .populate({
             path: "writer",
             select: "_id name avatar",
@@ -114,12 +113,22 @@ const getChannelPlaylist = async (req, res) => {
                 sort: { createdAt: -1 },
             },
         })
-            .sort("-createdAt");
-        return res.json({
+            .sort("-createdAt")
+            .lean();
+        const totalPages = Math.ceil(totalCount / perPage);
+        const hasMore = currentPage < totalPages;
+        const headers = {
+            "x-page": currentPage,
+            "x-total-count": totalCount,
+            "x-pages-count": totalPages,
+            "x-per-page": perPage,
+            "x-next-page": hasMore ? currentPage + 1 : null,
+        };
+        return res.status(200).json({
             success: true,
             playlists,
-            totalPage: Math.ceil(total / limit),
-            total,
+            headers,
+            hasMore,
         });
     }
     catch (error) {

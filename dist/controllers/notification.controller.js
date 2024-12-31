@@ -43,23 +43,66 @@ const createNotification = async (req, res) => {
     }
 };
 exports.createNotification = createNotification;
+// export const getNotification = async (req: CustomRequest, res: Response) => {
+//   const user_id = req.userId;
+//   try {
+//     const notifications = await NotificationModel.find({
+//       user: user_id,
+//     })
+//       .populate({
+//         path: "from_user",
+//         select: "_id name avatar",
+//       })
+//       .sort("-createdAt");
+//     res.json({ success: true, data: notifications });
+//   } catch (error) {
+//     res
+//       .status(500)
+//       .json({ success: false, message: "Server not found!", error });
+//   }
+// };
 const getNotification = async (req, res) => {
     const user_id = req.userId;
+    const { page = 1, limit = 10 } = req.query;
+    const perPage = parseInt(limit, 10) || 10;
+    const currentPage = parseInt(page, 10) || 1;
+    const skip = (currentPage - 1) * perPage;
     try {
-        const notifications = await notification_models_1.NotificationModel.find({
+        const totalCount = await notification_models_1.NotificationModel.countDocuments({
             user: user_id,
-        })
+        });
+        const notifications = await notification_models_1.NotificationModel.find({ user: user_id })
             .populate({
             path: "from_user",
             select: "_id name avatar",
         })
-            .sort("-createdAt");
-        res.json({ success: true, data: notifications });
+            .sort("-createdAt")
+            .skip(skip)
+            .limit(perPage)
+            .lean();
+        const totalPages = Math.ceil(totalCount / perPage);
+        const hasMore = currentPage < totalPages;
+        const headers = {
+            "x-page": currentPage,
+            "x-total-count": totalCount,
+            "x-pages-count": totalPages,
+            "x-per-page": perPage,
+            "x-next-page": hasMore ? currentPage + 1 : null,
+        };
+        return res.status(200).json({
+            success: true,
+            data: notifications,
+            headers,
+            hasMore,
+        });
     }
     catch (error) {
-        res
-            .status(500)
-            .json({ success: false, message: "Server not found!", error });
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: "Server error!",
+            error,
+        });
     }
 };
 exports.getNotification = getNotification;

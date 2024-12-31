@@ -312,18 +312,18 @@ const searchVideo = async (req, res) => {
 };
 exports.searchVideo = searchVideo;
 const getTrendingVideos = async (req, res) => {
-    const limit = parseInt(req.query.limit) || 12;
-    const page = parseInt(req.query.page) || 1;
-    const videoType = req.query.videoType;
-    const skip = (page - 1) * limit;
     try {
-        const matchConditions = { isPublic: true };
+        const { page = 1, limit = 12, videoType } = req.query;
+        const perPage = parseInt(limit) || 12;
+        const currentPage = parseInt(page) || 1;
+        let query = { isPublic: true };
         if (videoType) {
-            matchConditions.videoType = videoType;
+            query.videoType = videoType;
         }
+        const skip = (currentPage - 1) * perPage;
         const trendingVideos = await video_models_1.VideoModel.aggregate([
             {
-                $match: matchConditions,
+                $match: query,
             },
             {
                 $addFields: {
@@ -351,10 +351,10 @@ const getTrendingVideos = async (req, res) => {
                 $sort: { trendScore: -1, publishedDate: -1 },
             },
             {
-                $limit: limit,
+                $skip: skip,
             },
             {
-                $skip: skip,
+                $limit: perPage,
             },
             {
                 $project: {
@@ -374,16 +374,27 @@ const getTrendingVideos = async (req, res) => {
             { path: "writer", select: "name avatar" },
             { path: "category", select: "title" },
         ]);
+        const totalCount = await video_models_1.VideoModel.countDocuments(query);
+        const totalPages = Math.ceil(totalCount / perPage);
+        const hasMore = currentPage < totalPages;
+        const headers = {
+            "x-page": currentPage,
+            "x-total-count": totalCount,
+            "x-pages-count": totalPages,
+            "x-per-page": perPage,
+            "x-next-page": hasMore ? currentPage + 1 : null,
+        };
         return res.status(200).json({
-            statusCode: 200,
-            message: "Success",
+            success: true,
             data: videosWithDetails,
+            headers,
+            hasMore,
         });
     }
     catch (error) {
         console.error("Error in getting trending videos:", error);
         return res.status(500).json({
-            statusCode: 500,
+            success: false,
             message: "Server Error",
         });
     }
@@ -504,17 +515,18 @@ const descViewAuth = async (req, res) => {
 exports.descViewAuth = descViewAuth;
 const getWatchedVideos = async (req, res) => {
     const userId = req.params.userId;
-    const { videoType } = req.query;
+    const { videoType, page = 1, limit = 5 } = req.query;
+    const perPage = parseInt(limit) || 5;
+    const currentPage = parseInt(page) || 1;
     try {
         const twoWeeksAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
         await watchvideo_models_1.WatchedVideoModel.deleteMany({
             user: userId,
             watchedAt: { $lt: twoWeeksAgo },
         });
-        const watchedVideos = await watchvideo_models_1.WatchedVideoModel.aggregate([
-            {
-                $match: { user: new mongoose_1.default.Types.ObjectId(userId) },
-            },
+        const skip = (currentPage - 1) * perPage;
+        const pipeline = [
+            { $match: { user: new mongoose_1.default.Types.ObjectId(userId) } },
             {
                 $lookup: {
                     from: "videos",
@@ -541,13 +553,31 @@ const getWatchedVideos = async (req, res) => {
                     video: 1,
                 },
             },
-        ]);
+            { $skip: skip },
+            { $limit: perPage },
+        ];
+        const watchedVideos = await watchvideo_models_1.WatchedVideoModel.aggregate(pipeline);
+        const totalCount = await watchvideo_models_1.WatchedVideoModel.countDocuments({
+            user: new mongoose_1.default.Types.ObjectId(userId),
+            ...(videoType ? { "video.videoType": videoType } : {}),
+        });
+        const totalPages = Math.ceil(totalCount / perPage);
+        const hasMore = currentPage < totalPages;
+        const headers = {
+            "x-page": currentPage,
+            "x-total-count": totalCount,
+            "x-pages-count": totalPages,
+            "x-per-page": perPage,
+            "x-next-page": hasMore ? currentPage + 1 : null,
+        };
         if (!watchedVideos.length) {
             return res.status(404).json({ message: "No watched videos found." });
         }
         res.status(200).json({
             success: true,
             data: watchedVideos,
+            headers,
+            hasMore,
         });
     }
     catch (error) {
@@ -590,6 +620,9 @@ const getVideobyId = async (req, res) => {
 exports.getVideobyId = getVideobyId;
 const getVideoRecommend = async (req, res) => {
     const { id } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+    const perPage = parseInt(limit) || 10;
+    const currentPage = parseInt(page) || 1;
     if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
         return res.status(400).json({
             success: false,
@@ -604,6 +637,7 @@ const getVideoRecommend = async (req, res) => {
                 message: "Video not found!",
             });
         }
+        const skip = (currentPage - 1) * perPage;
         let recommendedVideos = await video_models_1.VideoModel.find({
             _id: { $ne: id },
             videoType: { $ne: "short" },
@@ -614,7 +648,8 @@ const getVideoRecommend = async (req, res) => {
             isPublic: true,
         })
             .sort({ totalView: -1 })
-            .limit(10)
+            .skip(skip)
+            .limit(perPage)
             .populate("writer", "name avatar")
             .populate("tags", "name")
             .lean();
@@ -625,14 +660,35 @@ const getVideoRecommend = async (req, res) => {
                 isPublic: true,
             })
                 .sort({ totalView: -1, publishedDate: -1 })
-                .limit(10)
+                .skip(skip)
+                .limit(perPage)
                 .populate("writer", "name avatar")
                 .populate("tags", "name")
                 .lean();
         }
+        const totalCount = await video_models_1.VideoModel.countDocuments({
+            _id: { $ne: id },
+            videoType: { $ne: "short" },
+            $or: [
+                { category: currentVideo.category },
+                { tags: { $in: currentVideo.tags } },
+            ],
+            isPublic: true,
+        });
+        const totalPages = Math.ceil(totalCount / perPage);
+        const hasMore = currentPage < totalPages;
+        const headers = {
+            "x-page": currentPage,
+            "x-total-count": totalCount,
+            "x-pages-count": totalPages,
+            "x-per-page": perPage,
+            "x-next-page": hasMore ? currentPage + 1 : null,
+        };
         return res.status(200).json({
             success: true,
             data: recommendedVideos,
+            headers,
+            hasMore,
         });
     }
     catch (error) {

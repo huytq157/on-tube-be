@@ -45,7 +45,6 @@ export const getChannelVideo = async (
   const isPublic = req.query.isPublic === "true";
   const videoType = req.query.videoType as string;
   const sortBy = req.query.sortBy as string;
-  // const sortByPopularity = req.query.sortByPopularity as string;
 
   try {
     const filter: any = {
@@ -57,21 +56,14 @@ export const getChannelVideo = async (
       filter.videoType = videoType;
     }
 
-    const total = await VideoModel.countDocuments(filter);
+    const totalCount = await VideoModel.countDocuments(filter);
+    const totalPages = Math.ceil(totalCount / limit);
+    const hasMore = page < totalPages;
+
     let sortOptions: any = { createdAt: -1 };
     if (sortBy === "oldest") {
       sortOptions = { createdAt: 1 };
     }
-
-    // if (sortByPopularity === "popular") {
-    //   sortOptions = {
-    //     $cond: {
-    //       if: { $gt: ["$totalView", 1] },
-    //       then: { totalView: -1 },
-    //       else: { likeCount: -1 },
-    //     },
-    //   };
-    // }
 
     const videos = await VideoModel.find(filter)
       .select(
@@ -80,14 +72,21 @@ export const getChannelVideo = async (
       .skip(skip)
       .limit(limit)
       .populate("writer")
-      .sort("-createdAt")
       .sort(sortOptions);
 
-    return res.json({
+    const headers = {
+      "x-page": page,
+      "x-total-count": totalCount,
+      "x-pages-count": totalPages,
+      "x-per-page": limit,
+      "x-next-page": hasMore ? page + 1 : null,
+    };
+
+    return res.status(200).json({
       success: true,
       data: videos,
-      totalPage: Math.ceil(total / limit),
-      total,
+      headers,
+      hasMore,
     });
   } catch (error) {
     console.error(error);
@@ -103,23 +102,24 @@ export const getChannelPlaylist = async (
   res: Response
 ): Promise<Response> => {
   const channelId = req.params.id;
-  const page = parseInt(req.query.page as string, 10) || 1;
-  const limit = parseInt(req.query.limit as string, 10) || 12;
-  const skip = (page - 1) * limit;
-  const isPublic = req.query.isPublic === "true";
+  const { page = 1, limit = 12, isPublic = "true" } = req.query;
+  const perPage = parseInt(limit as string, 10) || 12;
+  const currentPage = parseInt(page as string, 10) || 1;
+  const skip = (currentPage - 1) * perPage;
+  const publicFlag = isPublic === "true";
 
   try {
-    const total = await PlaylistModel.countDocuments({
+    const totalCount = await PlaylistModel.countDocuments({
       writer: channelId,
-      isPublic: isPublic,
+      isPublic: publicFlag,
     });
 
     const playlists = await PlaylistModel.find({
       writer: channelId,
-      isPublic: isPublic,
+      isPublic: publicFlag,
     })
       .skip(skip)
-      .limit(limit)
+      .limit(perPage)
       .populate({
         path: "writer",
         select: "_id name avatar",
@@ -135,13 +135,25 @@ export const getChannelPlaylist = async (
           sort: { createdAt: -1 },
         },
       })
-      .sort("-createdAt");
+      .sort("-createdAt")
+      .lean();
 
-    return res.json({
+    const totalPages = Math.ceil(totalCount / perPage);
+    const hasMore = currentPage < totalPages;
+
+    const headers = {
+      "x-page": currentPage,
+      "x-total-count": totalCount,
+      "x-pages-count": totalPages,
+      "x-per-page": perPage,
+      "x-next-page": hasMore ? currentPage + 1 : null,
+    };
+
+    return res.status(200).json({
       success: true,
       playlists,
-      totalPage: Math.ceil(total / limit),
-      total,
+      headers,
+      hasMore,
     });
   } catch (error) {
     console.error(error);
