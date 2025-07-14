@@ -12,6 +12,7 @@ import session from "express-session";
 
 import authRoutes from "./routers/auth.routes";
 import uploadRoute from "./routers/upload.routes";
+import uploadDriveRoute from "./routers/uploaddrive.routes";
 import videoRoute from "./routers/video.routes";
 import playlistRoute from "./routers/playlist.routes";
 import categoryRoute from "./routers/category.routes";
@@ -71,6 +72,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/upload", uploadRoute);
+app.use("/api/upload/drive", uploadDriveRoute);
 app.use("/api/video", videoRoute);
 app.use("/api/playlist", playlistRoute);
 app.use("/api/categories", categoryRoute);

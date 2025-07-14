@@ -4,6 +4,7 @@ import { CategoryModel } from "../models/category.models";
 import { PlaylistModel } from "../models/playlist.models";
 import mongoose from "mongoose";
 import { WatchedVideoModel } from "../models/watchvideo.models";
+import { UserModel } from "../models/users.models";
 interface CustomRequest extends Request {
   userId?: string;
 }

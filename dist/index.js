@@ -16,6 +16,7 @@ require("./config/auth");
 const express_session_1 = __importDefault(require("express-session"));
 const auth_routes_1 = __importDefault(require("./routers/auth.routes"));
 const upload_routes_1 = __importDefault(require("./routers/upload.routes"));
+const uploaddrive_routes_1 = __importDefault(require("./routers/uploaddrive.routes"));
 const video_routes_1 = __importDefault(require("./routers/video.routes"));
 const playlist_routes_1 = __importDefault(require("./routers/playlist.routes"));
 const category_routes_1 = __importDefault(require("./routers/category.routes"));
@@ -64,6 +65,7 @@ app.get("/", (req, res) => {
 });
 app.use("/api/auth", auth_routes_1.default);
 app.use("/api/upload", upload_routes_1.default);
+app.use("/api/upload/drive", uploaddrive_routes_1.default);
 app.use("/api/video", video_routes_1.default);
 app.use("/api/playlist", playlist_routes_1.default);
 app.use("/api/categories", category_routes_1.default);
