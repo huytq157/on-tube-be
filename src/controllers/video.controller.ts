@@ -140,6 +140,7 @@ export const addVideo = async (req: CustomRequest, res: Response) => {
       videoThumbnail,
       publishedDate,
       videoType,
+      slug
     } = req.body;
 
     if (!title || !description || !videoUrl || !publishedDate || !videoType) {
@@ -204,6 +205,7 @@ export const addVideo = async (req: CustomRequest, res: Response) => {
       publishedDate,
       writer,
       videoType,
+      slug,
     });
 
     await newVideo.save();
@@ -247,6 +249,7 @@ export const updateVideo = async (req: CustomRequest, res: Response) => {
       videoThumbnail,
       publishedDate,
       videoType,
+      slug
     } = req.body;
 
     // Kiểm tra video có tồn tại và thuộc về người dùng hiện tại hay không
@@ -318,6 +321,7 @@ export const updateVideo = async (req: CustomRequest, res: Response) => {
         videoThumbnail: videoThumbnail || video.videoThumbnail,
         publishedDate: publishedDate || video.publishedDate,
         videoType: videoType || video.videoType,
+        ...(slug && { slug }),
       },
       { new: true }
     );
@@ -723,7 +727,7 @@ export const getVideobyId = async (
 
     return res.status(200).json({
       success: true,
-      data: video,
+      data: video && { ...video, slug: video.slug },
     });
   } catch (error) {
     return res.status(500).json({

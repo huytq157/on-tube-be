@@ -20,7 +20,7 @@ const getAllCategories = async (req: Request, res: Response) => {
 
 const addedCategory = async (req: Request, res: Response) => {
   try {
-    const { title } = req.body;
+    const { title, slug } = req.body;
 
     if (!title) {
       return res.status(400).json({
@@ -29,7 +29,7 @@ const addedCategory = async (req: Request, res: Response) => {
       });
     }
 
-    const newCategory = new CategoryModel({ title });
+    const newCategory = new CategoryModel({ title, slug });
     await newCategory.save();
 
     res.status(201).json({
