@@ -107,7 +107,7 @@ const addVideo = async (req, res) => {
         });
     }
     try {
-        const { title, description, videoUrl, isPublic, allowComments, category, playlist, tags, videoThumbnail, publishedDate, videoType, } = req.body;
+        const { title, description, videoUrl, isPublic, allowComments, category, playlist, tags, videoThumbnail, publishedDate, videoType, slug } = req.body;
         if (!title || !description || !videoUrl || !publishedDate || !videoType) {
             return res.status(400).json({
                 success: false,
@@ -164,6 +164,7 @@ const addVideo = async (req, res) => {
             publishedDate,
             writer,
             videoType,
+            slug,
         });
         await newVideo.save();
         if (validPlaylist) {
@@ -188,7 +189,7 @@ const updateVideo = async (req, res) => {
     const videoId = req.params.id;
     const userId = req.userId;
     try {
-        const { title, description, videoUrl, isPublic, allowComments, category, playlist, tags, videoThumbnail, publishedDate, videoType, } = req.body;
+        const { title, description, videoUrl, isPublic, allowComments, category, playlist, tags, videoThumbnail, publishedDate, videoType, slug } = req.body;
         // Kiểm tra video có tồn tại và thuộc về người dùng hiện tại hay không
         const video = await video_models_1.VideoModel.findById(videoId);
         if (!video) {
@@ -253,6 +254,7 @@ const updateVideo = async (req, res) => {
             videoThumbnail: videoThumbnail || video.videoThumbnail,
             publishedDate: publishedDate || video.publishedDate,
             videoType: videoType || video.videoType,
+            ...(slug && { slug }),
         }, { new: true });
         // Nếu playlist có thay đổi, cập nhật playlist
         if (video.playlist !== validPlaylist) {
@@ -607,7 +609,7 @@ const getVideobyId = async (req, res) => {
         }
         return res.status(200).json({
             success: true,
-            data: video,
+            data: video && { ...video, slug: video.slug },
         });
     }
     catch (error) {

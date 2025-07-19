@@ -22,14 +22,14 @@ const getAllCategories = async (req, res) => {
 exports.getAllCategories = getAllCategories;
 const addedCategory = async (req, res) => {
     try {
-        const { title } = req.body;
+        const { title, slug } = req.body;
         if (!title) {
             return res.status(400).json({
                 statusCode: 400,
                 message: "Title is required",
             });
         }
-        const newCategory = new category_models_1.CategoryModel({ title });
+        const newCategory = new category_models_1.CategoryModel({ title, slug });
         await newCategory.save();
         res.status(201).json({
             statusCode: 201,
