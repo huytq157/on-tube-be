@@ -47,7 +47,7 @@ export default router;
  * /api/video/watched-videos:
  *   get:
  *     tags: [Videos]
- *     summary: Get a list of videos that the user has watched
+ *     summary: Danh sách video đã xem
  *     responses:
  *       200:
  *         description: Successfully retrieved the list of watched videos.

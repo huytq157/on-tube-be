@@ -101,6 +101,11 @@ const VideoSchema = new mongoose_1.default.Schema({
         enum: ["short", "long"],
         required: true,
     },
+    slug: {
+        type: String,
+        required: true,
+        unique: true,
+    },
 }, {
     timestamps: true,
 });

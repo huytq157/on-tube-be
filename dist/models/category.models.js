@@ -10,6 +10,11 @@ const CategorySchema = new mongoose_1.default.Schema({
         type: String,
         required: true,
     },
+    slug: {
+        type: String,
+        required: true,
+        unique: true,
+    },
 }, {
     timestamps: true,
 });

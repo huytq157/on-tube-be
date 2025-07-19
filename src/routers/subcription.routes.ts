@@ -86,7 +86,7 @@ import {
  *         description: ID kênh cần kiểm tra
  *     responses:
  *       200:
- *         description: Trạng thái đăng ký (subscribed: true/false)
+ *         description: "Trạng thái đăng ký (subscribed: true/false)"
  */
 /**
  * @swagger
