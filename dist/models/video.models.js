@@ -54,16 +54,16 @@ const VideoSchema = new mongoose_1.default.Schema({
     },
     writer: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: "User",
+        ref: 'User',
         required: true,
     },
     category: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: "Category",
+        ref: 'Category',
     },
     playlist: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: "Playlist",
+        ref: 'Playlist',
     },
     tags: [
         {
@@ -98,7 +98,7 @@ const VideoSchema = new mongoose_1.default.Schema({
     },
     videoType: {
         type: String,
-        enum: ["short", "long"],
+        enum: ['short', 'long'],
         required: true,
     },
     slug: {
@@ -109,4 +109,4 @@ const VideoSchema = new mongoose_1.default.Schema({
 }, {
     timestamps: true,
 });
-exports.VideoModel = mongoose_1.default.model("Video", VideoSchema);
+exports.VideoModel = mongoose_1.default.model('Video', VideoSchema);

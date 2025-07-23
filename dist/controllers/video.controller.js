@@ -15,7 +15,7 @@ const getAllVideos = async (req, res) => {
         const limit = parseInt(req.query.limit, 10) || 12;
         const skip = (page - 1) * limit;
         const category = req.query.category;
-        const isPublic = req.query.isPublic === "true";
+        const isPublic = req.query.isPublic === 'true';
         const videoType = req.query.videoType;
         const filter = {};
         if (category) {
@@ -26,16 +26,16 @@ const getAllVideos = async (req, res) => {
         if (req.query.isPublic) {
             filter.isPublic = isPublic;
         }
-        if (videoType && ["short", "long"].includes(videoType)) {
+        if (videoType && ['short', 'long'].includes(videoType)) {
             filter.videoType = videoType;
         }
         const total = await video_models_1.VideoModel.countDocuments(filter);
         const videos = await video_models_1.VideoModel.find(filter)
-            .select("title videoThumbnail videoUrl isPublic publishedDate totalView videoType createdAt")
+            .select('title slug videoThumbnail videoUrl isPublic publishedDate totalView videoType createdAt')
             .limit(limit)
             .skip(skip)
-            .populate("writer", "name avatar")
-            .sort("-createdAt")
+            .populate('writer', 'name avatar')
+            .sort('-createdAt')
             .lean();
         return res.status(200).json({
             success: true,
@@ -49,7 +49,7 @@ const getAllVideos = async (req, res) => {
         console.error(error);
         return res.status(500).json({
             success: false,
-            message: "Internal Server Error",
+            message: 'Internal Server Error',
         });
     }
 };
@@ -60,19 +60,19 @@ const getVideos = async (req, res) => {
         const perPage = parseInt(limit) || 5;
         const currentPage = parseInt(page) || 1;
         let query = {};
-        if (category && category !== "null") {
+        if (category && category !== 'null') {
             query.category = category;
         }
         if (videoType) {
             query.videoType = videoType;
         }
         if (isPublic !== undefined) {
-            query.isPublic = isPublic === "true";
+            query.isPublic = isPublic === 'true';
         }
         const skip = (currentPage - 1) * perPage;
         const videos = await video_models_1.VideoModel.find(query)
-            .select("title videoThumbnail videoUrl isPublic publishedDate totalView createdAt")
-            .populate("writer", "name avatar")
+            .select('title videoThumbnail videoUrl isPublic publishedDate totalView createdAt')
+            .populate('writer', 'name avatar')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(perPage);
@@ -80,11 +80,11 @@ const getVideos = async (req, res) => {
         const totalPages = Math.ceil(totalCount / perPage);
         const hasMore = currentPage < totalPages;
         const headers = {
-            "x-page": currentPage,
-            "x-total-count": totalCount,
-            "x-pages-count": totalPages,
-            "x-per-page": perPage,
-            "x-next-page": hasMore ? currentPage + 1 : null,
+            'x-page': currentPage,
+            'x-total-count': totalCount,
+            'x-pages-count': totalPages,
+            'x-per-page': perPage,
+            'x-next-page': hasMore ? currentPage + 1 : null,
         };
         return res.status(200).json({
             success: true,
@@ -95,35 +95,33 @@ const getVideos = async (req, res) => {
     }
     catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, message: "Server error" });
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 exports.getVideos = getVideos;
 const addVideo = async (req, res) => {
-    if (!req.body.videoUrl.includes("")) {
+    if (!req.body.videoUrl.includes('')) {
         return res.status(400).json({
             success: false,
-            message: "You do not have permission to upload videos!",
+            message: 'You do not have permission to upload videos!',
         });
     }
     try {
-        const { title, description, videoUrl, isPublic, allowComments, category, playlist, tags, videoThumbnail, publishedDate, videoType, slug } = req.body;
+        const { title, description, videoUrl, isPublic, allowComments, category, playlist, tags, videoThumbnail, publishedDate, videoType, slug, } = req.body;
         if (!title || !description || !videoUrl || !publishedDate || !videoType) {
             return res.status(400).json({
                 success: false,
-                message: "All required fields must be provided!",
+                message: 'All required fields must be provided!',
             });
         }
-        if (!videoUrl.includes("http")) {
+        if (!videoUrl.includes('http')) {
             return res.status(400).json({
                 success: false,
-                message: "Invalid video URL!",
+                message: 'Invalid video URL!',
             });
         }
         let validCategory = null;
-        if (category &&
-            category.trim() !== "" &&
-            mongoose_1.default.Types.ObjectId.isValid(category)) {
+        if (category && category.trim() !== '' && mongoose_1.default.Types.ObjectId.isValid(category)) {
             const categoryExists = await category_models_1.CategoryModel.findById(category);
             if (categoryExists) {
                 validCategory = category;
@@ -131,14 +129,12 @@ const addVideo = async (req, res) => {
             else {
                 return res.status(400).json({
                     success: false,
-                    message: "Category does not exist!",
+                    message: 'Category does not exist!',
                 });
             }
         }
         let validPlaylist = null;
-        if (playlist &&
-            playlist.trim() !== "" &&
-            mongoose_1.default.Types.ObjectId.isValid(playlist)) {
+        if (playlist && playlist.trim() !== '' && mongoose_1.default.Types.ObjectId.isValid(playlist)) {
             const playlistExists = await playlist_models_1.PlaylistModel.findById(playlist);
             if (playlistExists) {
                 validPlaylist = playlist;
@@ -146,7 +142,7 @@ const addVideo = async (req, res) => {
             else {
                 return res.status(400).json({
                     success: false,
-                    message: "Playlist does not exist!",
+                    message: 'Playlist does not exist!',
                 });
             }
         }
@@ -172,15 +168,15 @@ const addVideo = async (req, res) => {
         }
         return res.status(201).json({
             success: true,
-            message: "Video uploaded successfully!",
+            message: 'Video uploaded successfully!',
             data: newVideo,
         });
     }
     catch (error) {
-        console.error("Error adding video:", error);
+        console.error('Error adding video:', error);
         return res.status(500).json({
             success: false,
-            message: "Server error, please try again later.",
+            message: 'Server error, please try again later.',
         });
     }
 };
@@ -189,26 +185,26 @@ const updateVideo = async (req, res) => {
     const videoId = req.params.id;
     const userId = req.userId;
     try {
-        const { title, description, videoUrl, isPublic, allowComments, category, playlist, tags, videoThumbnail, publishedDate, videoType, slug } = req.body;
+        const { title, description, videoUrl, isPublic, allowComments, category, playlist, tags, videoThumbnail, publishedDate, videoType, slug, } = req.body;
         // Kiểm tra video có tồn tại và thuộc về người dùng hiện tại hay không
         const video = await video_models_1.VideoModel.findById(videoId);
         if (!video) {
             return res.status(404).json({
                 success: false,
-                message: "Video not found!",
+                message: 'Video not found!',
             });
         }
         if (video.writer.toString() !== userId) {
             return res.status(403).json({
                 success: false,
-                message: "You do not have permission to update this video!",
+                message: 'You do not have permission to update this video!',
             });
         }
         // Kiểm tra URL video có hợp lệ không
-        if (videoUrl && !videoUrl.includes("http")) {
+        if (videoUrl && !videoUrl.includes('http')) {
             return res.status(400).json({
                 success: false,
-                message: "Invalid video URL!",
+                message: 'Invalid video URL!',
             });
         }
         // Kiểm tra category có tồn tại không
@@ -221,7 +217,7 @@ const updateVideo = async (req, res) => {
             else {
                 return res.status(400).json({
                     success: false,
-                    message: "Category does not exist!",
+                    message: 'Category does not exist!',
                 });
             }
         }
@@ -235,7 +231,7 @@ const updateVideo = async (req, res) => {
             else {
                 return res.status(400).json({
                     success: false,
-                    message: "Playlist does not exist!",
+                    message: 'Playlist does not exist!',
                 });
             }
         }
@@ -244,10 +240,8 @@ const updateVideo = async (req, res) => {
             title: title || video.title,
             description: description || video.description,
             videoUrl: videoUrl || video.videoUrl,
-            isPublic: typeof isPublic === "boolean" ? isPublic : video.isPublic,
-            allowComments: typeof allowComments === "boolean"
-                ? allowComments
-                : video.allowComments,
+            isPublic: typeof isPublic === 'boolean' ? isPublic : video.isPublic,
+            allowComments: typeof allowComments === 'boolean' ? allowComments : video.allowComments,
             category: validCategory,
             playlist: validPlaylist,
             tags: tags || video.tags,
@@ -269,15 +263,15 @@ const updateVideo = async (req, res) => {
         }
         return res.status(200).json({
             success: true,
-            message: "Video updated successfully!",
+            message: 'Video updated successfully!',
             data: updatedVideo,
         });
     }
     catch (error) {
-        console.error("Error updating video:", error);
+        console.error('Error updating video:', error);
         return res.status(500).json({
             success: false,
-            message: "Server error, please try again later.",
+            message: 'Server error, please try again later.',
         });
     }
 };
@@ -287,16 +281,16 @@ const searchVideo = async (req, res) => {
     if (!searchTerm || !searchTerm.trim()) {
         return res.status(400).json({
             success: false,
-            message: "Missing parameters!",
+            message: 'Missing parameters!',
         });
     }
     try {
-        const textReg = new RegExp(searchTerm.trim(), "i");
+        const textReg = new RegExp(searchTerm.trim(), 'i');
         const results = await video_models_1.VideoModel.find({
             title: textReg,
         })
-            .populate("writer", "name email avatar")
-            .sort("-totalView")
+            .populate('writer', 'name email avatar')
+            .sort('-totalView')
             .limit(12)
             .lean();
         return res.json({
@@ -308,7 +302,7 @@ const searchVideo = async (req, res) => {
         console.error(error);
         return res.status(500).json({
             success: false,
-            message: "An error occurred while searching for videos.",
+            message: 'An error occurred while searching for videos.',
         });
     }
 };
@@ -331,13 +325,13 @@ const getTrendingVideos = async (req, res) => {
                 $addFields: {
                     trendScore: {
                         $add: [
-                            { $multiply: ["$totalView", 1] },
-                            { $multiply: ["$likeCount", 2] },
+                            { $multiply: ['$totalView', 1] },
+                            { $multiply: ['$likeCount', 2] },
                             {
                                 $cond: [
                                     {
                                         $gte: [
-                                            "$publishedDate",
+                                            '$publishedDate',
                                             new Date(new Date().setDate(new Date().getDate() - 7)),
                                         ],
                                     },
@@ -373,18 +367,18 @@ const getTrendingVideos = async (req, res) => {
             },
         ]);
         const videosWithDetails = await video_models_1.VideoModel.populate(trendingVideos, [
-            { path: "writer", select: "name avatar" },
-            { path: "category", select: "title" },
+            { path: 'writer', select: 'name avatar' },
+            { path: 'category', select: 'title' },
         ]);
         const totalCount = await video_models_1.VideoModel.countDocuments(query);
         const totalPages = Math.ceil(totalCount / perPage);
         const hasMore = currentPage < totalPages;
         const headers = {
-            "x-page": currentPage,
-            "x-total-count": totalCount,
-            "x-pages-count": totalPages,
-            "x-per-page": perPage,
-            "x-next-page": hasMore ? currentPage + 1 : null,
+            'x-page': currentPage,
+            'x-total-count': totalCount,
+            'x-pages-count': totalPages,
+            'x-per-page': perPage,
+            'x-next-page': hasMore ? currentPage + 1 : null,
         };
         return res.status(200).json({
             success: true,
@@ -394,10 +388,10 @@ const getTrendingVideos = async (req, res) => {
         });
     }
     catch (error) {
-        console.error("Error in getting trending videos:", error);
+        console.error('Error in getting trending videos:', error);
         return res.status(500).json({
             success: false,
-            message: "Server Error",
+            message: 'Server Error',
         });
     }
 };
@@ -410,7 +404,7 @@ const deleteVideo = async (req, res) => {
         if (!videoToDelete) {
             return res.status(404).json({
                 success: false,
-                message: "Video not found!",
+                message: 'Video not found!',
             });
         }
         if (videoToDelete.writer.toString() === userId) {
@@ -418,20 +412,20 @@ const deleteVideo = async (req, res) => {
             if (deletedVideo) {
                 return res.json({
                     success: true,
-                    message: "Delete success!",
+                    message: 'Delete success!',
                 });
             }
             else {
                 return res.status(500).json({
                     success: false,
-                    message: "Failed to delete the video!",
+                    message: 'Failed to delete the video!',
                 });
             }
         }
         else {
             return res.status(403).json({
                 success: false,
-                message: "Bạn không có quyền xóa video này!",
+                message: 'Bạn không có quyền xóa video này!',
             });
         }
     }
@@ -439,7 +433,7 @@ const deleteVideo = async (req, res) => {
         console.error(error);
         return res.status(500).json({
             success: false,
-            message: "Server error!",
+            message: 'Server error!',
         });
     }
 };
@@ -451,20 +445,16 @@ const descView = async (req, res) => {
         if (watchTime >= 1) {
             const updatedVideo = await video_models_1.VideoModel.findByIdAndUpdate(id, { $inc: { totalView: 1 } }, { new: true });
             if (!updatedVideo) {
-                return res.status(404).json({ message: "Video not found" });
+                return res.status(404).json({ message: 'Video not found' });
             }
-            return res
-                .status(200)
-                .json({ message: "View added", video: updatedVideo });
+            return res.status(200).json({ message: 'View added', video: updatedVideo });
         }
         else {
-            return res
-                .status(400)
-                .json({ message: "Watch time must be at least 60 seconds" });
+            return res.status(400).json({ message: 'Watch time must be at least 60 seconds' });
         }
     }
     catch (error) {
-        return res.status(500).json({ message: "Server error", error });
+        return res.status(500).json({ message: 'Server error', error });
     }
 };
 exports.descView = descView;
@@ -476,7 +466,7 @@ const descViewAuth = async (req, res) => {
         if (watchTime >= 1) {
             const updatedVideo = await video_models_1.VideoModel.findByIdAndUpdate(id, { $inc: { totalView: 1 } }, { new: true });
             if (!updatedVideo) {
-                return res.status(404).json({ message: "Video not found" });
+                return res.status(404).json({ message: 'Video not found' });
             }
             if (userId) {
                 const watchedVideoExists = await watchvideo_models_1.WatchedVideoModel.findOne({
@@ -496,20 +486,20 @@ const descViewAuth = async (req, res) => {
                 }
             }
             return res.status(200).json({
-                message: "View added and watch history updated",
+                message: 'View added and watch history updated',
                 video: updatedVideo,
             });
         }
         else {
             return res.status(400).json({
-                message: "Watch time must be at least 60 seconds",
+                message: 'Watch time must be at least 60 seconds',
             });
         }
     }
     catch (error) {
         console.error(error);
         return res.status(500).json({
-            message: "Server error",
+            message: 'Server error',
             error,
         });
     }
@@ -531,25 +521,25 @@ const getWatchedVideos = async (req, res) => {
             { $match: { user: new mongoose_1.default.Types.ObjectId(userId) } },
             {
                 $lookup: {
-                    from: "videos",
-                    localField: "video",
-                    foreignField: "_id",
-                    as: "video",
+                    from: 'videos',
+                    localField: 'video',
+                    foreignField: '_id',
+                    as: 'video',
                 },
             },
-            { $unwind: "$video" },
+            { $unwind: '$video' },
             {
-                $match: videoType ? { "video.videoType": videoType } : {},
+                $match: videoType ? { 'video.videoType': videoType } : {},
             },
             {
                 $lookup: {
-                    from: "users",
-                    localField: "video.writer",
-                    foreignField: "_id",
-                    as: "video.writer",
+                    from: 'users',
+                    localField: 'video.writer',
+                    foreignField: '_id',
+                    as: 'video.writer',
                 },
             },
-            { $unwind: "$video.writer" },
+            { $unwind: '$video.writer' },
             {
                 $project: {
                     video: 1,
@@ -561,19 +551,19 @@ const getWatchedVideos = async (req, res) => {
         const watchedVideos = await watchvideo_models_1.WatchedVideoModel.aggregate(pipeline);
         const totalCount = await watchvideo_models_1.WatchedVideoModel.countDocuments({
             user: new mongoose_1.default.Types.ObjectId(userId),
-            ...(videoType ? { "video.videoType": videoType } : {}),
+            ...(videoType ? { 'video.videoType': videoType } : {}),
         });
         const totalPages = Math.ceil(totalCount / perPage);
         const hasMore = currentPage < totalPages;
         const headers = {
-            "x-page": currentPage,
-            "x-total-count": totalCount,
-            "x-pages-count": totalPages,
-            "x-per-page": perPage,
-            "x-next-page": hasMore ? currentPage + 1 : null,
+            'x-page': currentPage,
+            'x-total-count': totalCount,
+            'x-pages-count': totalPages,
+            'x-per-page': perPage,
+            'x-next-page': hasMore ? currentPage + 1 : null,
         };
         if (!watchedVideos.length) {
-            return res.status(404).json({ message: "No watched videos found." });
+            return res.status(404).json({ message: 'No watched videos found.' });
         }
         res.status(200).json({
             success: true,
@@ -584,7 +574,7 @@ const getWatchedVideos = async (req, res) => {
     }
     catch (error) {
         console.error(error);
-        res.status(500).json({ message: "Server error", error });
+        res.status(500).json({ message: 'Server error', error });
     }
 };
 exports.getWatchedVideos = getWatchedVideos;
@@ -593,18 +583,18 @@ const getVideobyId = async (req, res) => {
     if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
         return res.status(400).json({
             success: false,
-            message: "Invalid video ID",
+            message: 'Invalid video ID',
         });
     }
     try {
         const video = await video_models_1.VideoModel.findById(id)
-            .populate("writer", "name avatar")
-            .populate("tags", "name")
+            .populate('writer', 'name avatar')
+            .populate('tags', 'name')
             .lean();
         if (!video) {
             return res.status(404).json({
                 success: false,
-                message: "Video not found!",
+                message: 'Video not found!',
             });
         }
         return res.status(200).json({
@@ -615,7 +605,7 @@ const getVideobyId = async (req, res) => {
     catch (error) {
         return res.status(500).json({
             success: false,
-            message: "Internal Server Error",
+            message: 'Internal Server Error',
         });
     }
 };
@@ -628,7 +618,7 @@ const getVideoRecommend = async (req, res) => {
     if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
         return res.status(400).json({
             success: false,
-            message: "Invalid video ID",
+            message: 'Invalid video ID',
         });
     }
     try {
@@ -636,55 +626,49 @@ const getVideoRecommend = async (req, res) => {
         if (!currentVideo) {
             return res.status(404).json({
                 success: false,
-                message: "Video not found!",
+                message: 'Video not found!',
             });
         }
         const skip = (currentPage - 1) * perPage;
         let recommendedVideos = await video_models_1.VideoModel.find({
             _id: { $ne: id },
-            videoType: { $ne: "short" },
-            $or: [
-                { category: currentVideo.category },
-                { tags: { $in: currentVideo.tags } },
-            ],
+            videoType: { $ne: 'short' },
+            $or: [{ category: currentVideo.category }, { tags: { $in: currentVideo.tags } }],
             isPublic: true,
         })
             .sort({ totalView: -1 })
             .skip(skip)
             .limit(perPage)
-            .populate("writer", "name avatar")
-            .populate("tags", "name")
+            .populate('writer', 'name avatar')
+            .populate('tags', 'name')
             .lean();
         if (recommendedVideos.length === 0) {
             recommendedVideos = await video_models_1.VideoModel.find({
                 _id: { $ne: id },
-                videoType: { $ne: "short" },
+                videoType: { $ne: 'short' },
                 isPublic: true,
             })
                 .sort({ totalView: -1, publishedDate: -1 })
                 .skip(skip)
                 .limit(perPage)
-                .populate("writer", "name avatar")
-                .populate("tags", "name")
+                .populate('writer', 'name avatar')
+                .populate('tags', 'name')
                 .lean();
         }
         const totalCount = await video_models_1.VideoModel.countDocuments({
             _id: { $ne: id },
-            videoType: { $ne: "short" },
-            $or: [
-                { category: currentVideo.category },
-                { tags: { $in: currentVideo.tags } },
-            ],
+            videoType: { $ne: 'short' },
+            $or: [{ category: currentVideo.category }, { tags: { $in: currentVideo.tags } }],
             isPublic: true,
         });
         const totalPages = Math.ceil(totalCount / perPage);
         const hasMore = currentPage < totalPages;
         const headers = {
-            "x-page": currentPage,
-            "x-total-count": totalCount,
-            "x-pages-count": totalPages,
-            "x-per-page": perPage,
-            "x-next-page": hasMore ? currentPage + 1 : null,
+            'x-page': currentPage,
+            'x-total-count': totalCount,
+            'x-pages-count': totalPages,
+            'x-per-page': perPage,
+            'x-next-page': hasMore ? currentPage + 1 : null,
         };
         return res.status(200).json({
             success: true,
@@ -697,7 +681,7 @@ const getVideoRecommend = async (req, res) => {
         console.error(error);
         return res.status(500).json({
             success: false,
-            message: "Internal Server Error",
+            message: 'Internal Server Error',
         });
     }
 };
@@ -708,7 +692,7 @@ const getUserVideoCount = async (req, res) => {
         if (!userId || !mongoose_1.default.Types.ObjectId.isValid(userId)) {
             return res.status(400).json({
                 success: false,
-                message: "Invalid or missing user ID!",
+                message: 'Invalid or missing user ID!',
             });
         }
         const videoCount = await video_models_1.VideoModel.countDocuments({ writer: userId });
@@ -718,10 +702,10 @@ const getUserVideoCount = async (req, res) => {
         });
     }
     catch (error) {
-        console.error("Error fetching user video count:", error);
+        console.error('Error fetching user video count:', error);
         return res.status(500).json({
             success: false,
-            message: "Server error, please try again later.",
+            message: 'Server error, please try again later.',
         });
     }
 };
