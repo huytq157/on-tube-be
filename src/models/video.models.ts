@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema } from 'mongoose'
 
 const VideoSchema = new mongoose.Schema(
   {
@@ -20,16 +20,16 @@ const VideoSchema = new mongoose.Schema(
     },
     writer: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
       required: true,
     },
     category: {
       type: Schema.Types.ObjectId,
-      ref: "Category",
+      ref: 'Category',
     },
     playlist: {
       type: Schema.Types.ObjectId,
-      ref: "Playlist",
+      ref: 'Playlist',
     },
     tags: [
       {
@@ -64,18 +64,16 @@ const VideoSchema = new mongoose.Schema(
     },
     videoType: {
       type: String,
-      enum: ["short", "long"],
+      enum: ['short', 'long'],
       required: true,
     },
     slug: {
       type: String,
-      required: true,
-      unique: true,
     },
   },
   {
     timestamps: true,
   }
-);
+)
 
-export const VideoModel = mongoose.model("Video", VideoSchema);
+export const VideoModel = mongoose.model('Video', VideoSchema)

@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema } from 'mongoose'
 
 const CategorySchema = new mongoose.Schema(
   {
@@ -8,13 +8,11 @@ const CategorySchema = new mongoose.Schema(
     },
     slug: {
       type: String,
-      required: true,
-      unique: true,
     },
   },
   {
     timestamps: true,
   }
-);
+)
 
-export const CategoryModel = mongoose.model("Category", CategorySchema);
+export const CategoryModel = mongoose.model('Category', CategorySchema)
