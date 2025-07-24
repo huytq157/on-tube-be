@@ -103,8 +103,6 @@ const VideoSchema = new mongoose_1.default.Schema({
     },
     slug: {
         type: String,
-        required: true,
-        unique: true,
     },
 }, {
     timestamps: true,

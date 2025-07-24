@@ -10,8 +10,6 @@ const getAllCategories = async (req: Request, res: Response) => {
       message: 'Success',
       data: categories,
     })
-
-    console.log('categories', categories)
   } catch (error) {
     return res.status(500).json({
       success: false,

@@ -12,10 +12,8 @@ const CategorySchema = new mongoose_1.default.Schema({
     },
     slug: {
         type: String,
-        required: true,
-        unique: true,
     },
 }, {
     timestamps: true,
 });
-exports.CategoryModel = mongoose_1.default.model("Category", CategorySchema);
+exports.CategoryModel = mongoose_1.default.model('Category', CategorySchema);

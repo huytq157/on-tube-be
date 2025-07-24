@@ -14,6 +14,7 @@ const passport_1 = __importDefault(require("passport"));
 require("./config/cronJobs");
 require("./config/auth");
 const express_session_1 = __importDefault(require("express-session"));
+const socket_1 = require("./socket");
 const auth_routes_1 = __importDefault(require("./routers/auth.routes"));
 const upload_routes_1 = __importDefault(require("./routers/upload.routes"));
 const uploaddrive_routes_1 = __importDefault(require("./routers/uploaddrive.routes"));
@@ -26,25 +27,16 @@ const comment_routes_1 = __importDefault(require("./routers/comment.routes"));
 const subcription_routes_1 = __importDefault(require("./routers/subcription.routes"));
 const notification_routes_1 = __importDefault(require("./routers/notification.routes"));
 const like_routes_1 = __importDefault(require("./routers/like.routes"));
+const http_1 = require("http");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
+const server = (0, http_1.createServer)(app);
+const io = (0, socket_1.initSocket)(server);
 app.use((0, cors_1.default)({
-    origin: (origin, callback) => {
-        // Chấp nhận các origin này
-        const allowedOrigins = [
-            "http://localhost:3000",
-            "https://on-tube.vercel.app",
-        ];
-        if (allowedOrigins.includes(origin) || !origin) {
-            callback(null, true); // Cho phép yêu cầu từ các origin hợp lệ
-        }
-        else {
-            callback(new Error("Not allowed by CORS")); // Không cho phép origin không hợp lệ
-        }
-    },
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true, // Cho phép gửi cookie, nếu cần
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
 }));
 const databaseUrl = process.env.DATABASE_URL;
 (0, database_1.default)(databaseUrl);
@@ -59,22 +51,26 @@ app.use((0, express_session_1.default)({
 }));
 app.use(passport_1.default.session());
 (0, swagger_1.setupSwagger)(app);
-app.use(express_1.default.static("public"));
-app.get("/", (req, res) => {
-    res.send("Không có đâu!");
+app.use(express_1.default.static('public'));
+app.get('/', (req, res) => {
+    res.send('Không có đâu!');
 });
-app.use("/api/auth", auth_routes_1.default);
-app.use("/api/upload", upload_routes_1.default);
-app.use("/api/upload/drive", uploaddrive_routes_1.default);
-app.use("/api/video", video_routes_1.default);
-app.use("/api/playlist", playlist_routes_1.default);
-app.use("/api/categories", category_routes_1.default);
-app.use("/api/tags", tag_routes_1.default);
-app.use("/api/channel", channel_routes_1.default);
-app.use("/api/comments", comment_routes_1.default);
-app.use("/api/subcription", subcription_routes_1.default);
-app.use("/api/notification", notification_routes_1.default);
-app.use("/api/vote", like_routes_1.default);
+app.use((req, res, next) => {
+    req.io = io;
+    next();
+});
+app.use('/api/auth', auth_routes_1.default);
+app.use('/api/upload', upload_routes_1.default);
+app.use('/api/upload/drive', uploaddrive_routes_1.default);
+app.use('/api/video', video_routes_1.default);
+app.use('/api/playlist', playlist_routes_1.default);
+app.use('/api/categories', category_routes_1.default);
+app.use('/api/tags', tag_routes_1.default);
+app.use('/api/channel', channel_routes_1.default);
+app.use('/api/comments', comment_routes_1.default);
+app.use('/api/subcription', subcription_routes_1.default);
+app.use('/api/notification', notification_routes_1.default);
+app.use('/api/vote', like_routes_1.default);
 const port = process.env.PORT || 5000;
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
