@@ -31,7 +31,7 @@ const getAllVideos = async (req, res) => {
         }
         const total = await video_models_1.VideoModel.countDocuments(filter);
         const videos = await video_models_1.VideoModel.find(filter)
-            .select('title slug videoThumbnail videoUrl isPublic publishedDate totalView videoType createdAt')
+            .select('title videoThumbnail videoUrl isPublic publishedDate totalView videoType createdAt slug')
             .limit(limit)
             .skip(skip)
             .populate('writer', 'name avatar')

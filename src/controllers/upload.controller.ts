@@ -1,90 +1,78 @@
-import multer from "multer";
-import { v2 as cloudinary } from "cloudinary";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
-import { Request, Response } from "express";
+import multer from 'multer'
+import { v2 as cloudinary } from 'cloudinary'
+import { CloudinaryStorage } from 'multer-storage-cloudinary'
+import { Request, Response } from 'express'
 
 cloudinary.config({
-  cloud_name: process.env.YOUR_CLOUD_NAME as string,
-  api_key: process.env.YOUR_API_KEY as string,
-  api_secret: process.env.YOUR_API_SECRET as string,
-});
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME as string,
+  api_key: process.env.CLOUDINARY_API_KEY as string,
+  api_secret: process.env.CLOUDINARY_API_SECRET as string,
+})
 
 interface CloudinaryParams {
-  folder?: string;
-  format?: (
-    req: Request,
-    file: Express.Multer.File
-  ) => Promise<string> | string;
-  public_id?: (req: Request, file: Express.Multer.File) => string;
-  resource_type?: string;
-  eager_async?: boolean;
+  folder?: string
+  format?: (req: Request, file: Express.Multer.File) => Promise<string> | string
+  public_id?: (req: Request, file: Express.Multer.File) => string
+  resource_type?: string
+  eager_async?: boolean
   eager?: (
     | { transformation: string }
     | { width: number; crop: string }
     | { width: number; height: number; crop: string; gravity: string }
-  )[];
+  )[]
 }
 
 const storageImage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "h-tube-image",
+    folder: 'h-tube-image',
     format: async (req, file): Promise<string> => {
-      const ext = file.originalname.split(".").pop();
+      const ext = file.originalname.split('.').pop()
       switch (ext) {
-        case "jpg":
-        case "jpeg":
-          return "jpg";
-        case "png":
-          return "png";
-        case "gif":
-          return "gif";
+        case 'jpg':
+        case 'jpeg':
+          return 'jpg'
+        case 'png':
+          return 'png'
+        case 'gif':
+          return 'gif'
         default:
-          return "png";
+          return 'png'
       }
     },
     public_id: (req, file): string => {
-      const timestamp = Date.now();
-      const ext = file.originalname.split(".").pop();
-      return `h-tube-image-${timestamp}-${file.originalname.replace(
-        `.${ext}`,
-        ""
-      )}`;
+      const timestamp = Date.now()
+      const ext = file.originalname.split('.').pop()
+      return `h-tube-image-${timestamp}-${file.originalname.replace(`.${ext}`, '')}`
     },
-    transformation: [
-      { width: 600, crop: "limit" },
-      { quality: "auto" },
-      { fetch_format: "webp" },
-    ],
+    transformation: [{ width: 600, crop: 'limit' }, { quality: 'auto' }, { fetch_format: 'webp' }],
   } as CloudinaryParams,
-});
+})
 
-const upload = multer({ storage: storageImage }).array("images", 10);
+const upload = multer({ storage: storageImage }).array('images', 10)
 
 const uploadImages = (req: Request, res: Response): void => {
   upload(req, res, function (err: any) {
     if (err) {
-      return res
-        .status(500)
-        .json({ code: "500", message: "Error", error: err.message });
+      return res.status(500).json({ code: '500', message: 'Error', error: err.message })
     }
 
-    const files = req.files as Express.Multer.File[];
+    const files = req.files as Express.Multer.File[]
 
     const data = files.map((file) => ({
       fileName: file.filename,
       size: file.size,
       url: file.path,
-    }));
+    }))
 
-    res.status(200).json({ code: "200", message: "Done", data });
-  });
-};
+    res.status(200).json({ code: '200', message: 'Done', data })
+  })
+}
 
 const getImage = async (req: Request, res: Response): Promise<void> => {
   try {
-    const fileName = req.params.fileName;
-    const result = await cloudinary.api.resource(fileName);
+    const fileName = req.params.fileName
+    const result = await cloudinary.api.resource(fileName)
     const fileDetails = {
       fileName: result.public_id,
       format: result.format,
@@ -93,69 +81,66 @@ const getImage = async (req: Request, res: Response): Promise<void> => {
       bytes: result.bytes,
       url: result.secure_url,
       created_at: result.created_at,
-    };
-    res.status(200).json({ code: "200", message: "Done", data: fileDetails });
+    }
+    res.status(200).json({ code: '200', message: 'Done', data: fileDetails })
   } catch (err: any) {
-    res.status(500).json({ code: "500", message: "Error", error: err.message });
+    res.status(500).json({ code: '500', message: 'Error', error: err.message })
   }
-};
+}
 
 const storageVideo = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "h-tube-video",
+    folder: 'h-tube-video',
     format: async (req, file): Promise<string> => {
-      const ext = file.originalname.split(".").pop();
+      const ext = file.originalname.split('.').pop()
       switch (ext) {
-        case "mp4":
-          return "mp4";
-        case "webm":
-          return "webm";
-        case "ogv":
-          return "ogv";
+        case 'mp4':
+          return 'mp4'
+        case 'webm':
+          return 'webm'
+        case 'ogv':
+          return 'ogv'
         default:
-          return "mp4";
+          return 'mp4'
       }
     },
-    public_id: (req, file): string =>
-      `videos/${Date.now()}-${file.originalname.split(".")[0]}`,
-    resource_type: "video",
+    public_id: (req, file): string => `videos/${Date.now()}-${file.originalname.split('.')[0]}`,
+    resource_type: 'video',
     eager_async: true,
     eager: [
-      { width: 800, crop: "scale" },
-      { width: 500, height: 500, crop: "crop", gravity: "center" },
+      { width: 800, crop: 'scale' },
+      { width: 500, height: 500, crop: 'crop', gravity: 'center' },
     ],
   } as CloudinaryParams,
-});
+})
 
-const uploadVideo = multer({ storage: storageVideo }).array("videos", 10);
+const uploadVideo = multer({ storage: storageVideo }).array('videos', 10)
 
 const uploadVideos = (req: Request, res: Response): void => {
   uploadVideo(req, res, function (err: any) {
     if (err) {
-      return res
-        .status(500)
-        .json({ code: "500", message: "Error", error: err.message });
+      return res.status(500).json({ code: '500', message: 'Error', error: err.message })
     }
 
-    const files = req.files as Express.Multer.File[];
+    const files = req.files as Express.Multer.File[]
 
     const data = files.map((file) => ({
       fileName: file.filename,
       size: file.size,
       url: file.path,
-    }));
+    }))
 
-    res.status(200).json({ code: "200", message: "Done", data });
-  });
-};
+    res.status(200).json({ code: '200', message: 'Done', data })
+  })
+}
 
 const getVideo = async (req: Request, res: Response): Promise<void> => {
   try {
-    const fileName = req.params.fileName;
+    const fileName = req.params.fileName
     const result = await cloudinary.api.resource(fileName, {
-      resource_type: "video",
-    });
+      resource_type: 'video',
+    })
     const videoDetails = {
       fileName: result.public_id,
       format: result.format,
@@ -165,85 +150,73 @@ const getVideo = async (req: Request, res: Response): Promise<void> => {
       bytes: result.bytes,
       url: result.secure_url,
       created_at: result.created_at,
-    };
-    res.status(200).json({ code: "200", message: "Done", data: videoDetails });
+    }
+    res.status(200).json({ code: '200', message: 'Done', data: videoDetails })
   } catch (err: any) {
-    res.status(500).json({ code: "500", message: "Error", error: err.message });
+    res.status(500).json({ code: '500', message: 'Error', error: err.message })
   }
-};
+}
 
 const storageAudio = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "h-tube",
-    format: async (
-      req: Request,
-      file: Express.Multer.File
-    ): Promise<string> => {
-      const ext = file.originalname.split(".").pop();
+    folder: 'h-tube',
+    format: async (req: Request, file: Express.Multer.File): Promise<string> => {
+      const ext = file.originalname.split('.').pop()
       switch (ext) {
-        case "mp3":
-          return "mp3";
-        case "wav":
-          return "wav";
-        case "ogg":
-          return "ogg";
+        case 'mp3':
+          return 'mp3'
+        case 'wav':
+          return 'wav'
+        case 'ogg':
+          return 'ogg'
         default:
-          return "mp3";
+          return 'mp3'
       }
     },
     public_id: (req: Request, file: Express.Multer.File): string =>
-      `audio/${Date.now()}-${file.originalname.split(".")[0]}`,
-    resource_type: "raw",
+      `audio/${Date.now()}-${file.originalname.split('.')[0]}`,
+    resource_type: 'raw',
   } as CloudinaryParams,
-});
+})
 
-const uploadAudio = multer({ storage: storageAudio }).array("audios", 10);
+const uploadAudio = multer({ storage: storageAudio }).array('audios', 10)
 
 const uploadAudios = (req: Request, res: Response): void => {
   uploadAudio(req, res, function (err: any) {
     if (err) {
-      return res
-        .status(500)
-        .json({ code: "500", message: "Error", error: err.message });
+      return res.status(500).json({ code: '500', message: 'Error', error: err.message })
     }
 
-    const files = req.files as Express.Multer.File[];
+    const files = req.files as Express.Multer.File[]
 
     const data = files.map((file) => ({
       fileName: file.filename,
       size: file.size,
       url: file.path,
-    }));
+    }))
 
-    res.status(200).json({ code: "200", message: "Done", data });
-  });
-};
+    res.status(200).json({ code: '200', message: 'Done', data })
+  })
+}
 
 const getAudio = async (req: Request, res: Response): Promise<void> => {
   try {
-    const fileName = req.params.fileName;
+    const fileName = req.params.fileName
     const result = await cloudinary.api.resource(fileName, {
-      resource_type: "raw",
-    });
+      resource_type: 'raw',
+    })
     const audioDetails = {
       fileName: result.public_id,
       format: result.format,
       bytes: result.bytes,
       url: result.secure_url,
       created_at: result.created_at,
-    };
-    res.status(200).json({ code: "200", message: "Done", data: audioDetails });
+    }
+    res.status(200).json({ code: '200', message: 'Done', data: audioDetails })
   } catch (err: any) {
-    res.status(500).json({ code: "500", message: "Error", error: err.message });
+    res.status(500).json({ code: '500', message: 'Error', error: err.message })
   }
-};
+}
 
-export {
-  uploadImages,
-  getImage,
-  uploadVideos,
-  getVideo,
-  uploadAudios,
-  getAudio,
-};
+export { uploadImages, getImage, uploadVideos, getVideo, uploadAudios, getAudio }
